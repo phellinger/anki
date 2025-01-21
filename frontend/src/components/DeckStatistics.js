@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Typography, Box, Button, Paper } from '@mui/material';
 import axios from '../services/api.js';
+import styles from '../styles/card.module.css';
+import sharedStyles from '../styles/shared.module.css';
 
 const DIFFICULTY_COLORS = {
   hard: '#d32f2f', // error.main
@@ -72,48 +74,19 @@ function DeckStatistics() {
   const maxCount = Math.max(...Object.values(difficulties));
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        p: 4,
-      }}
-    >
+    <div className={styles.cardContainer}>
       <Typography variant='h4' component='h1'>
         {deck.name}
       </Typography>
 
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          width: '100%',
-          maxWidth: 600,
-          minHeight: 300,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-around',
-        }}
-      >
+      <Paper elevation={3} className={styles.statisticsCard}>
         {Object.entries(difficulties).map(([difficulty, count]) => (
-          <Box
-            key={difficulty}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              width: '18%',
-            }}
-          >
+          <Box key={difficulty} className={styles.statisticsBar}>
             <Box
+              className={styles.barContent}
               sx={{
-                width: '100%',
                 bgcolor: DIFFICULTY_COLORS[difficulty],
                 height: `${(count / maxCount) * 250}px`,
-                minHeight: '1px',
-                transition: 'height 0.3s ease',
               }}
             />
             <Typography variant='body2' sx={{ mt: 1 }}>
@@ -128,10 +101,10 @@ function DeckStatistics() {
 
       <Typography variant='body1'>Total Cards: {deck.data.length}</Typography>
 
-      <Button variant='outlined' onClick={() => navigate('/')} sx={{ mt: 2 }}>
+      <Button variant='outlined' onClick={() => navigate('/')}>
         Back to Decks
       </Button>
-    </Box>
+    </div>
   );
 }
 

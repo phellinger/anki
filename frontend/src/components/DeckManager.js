@@ -17,6 +17,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteDeck from './DeleteDeck';
+import styles from '../styles/shared.module.css';
 
 function DeckManager() {
   const navigate = useNavigate();
@@ -55,15 +56,8 @@ function DeckManager() {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
+    <div className={styles.pageContainer}>
+      <Box className={styles.headerContainer}>
         <Typography variant='h4' component='h1'>
           Your Decks
         </Typography>

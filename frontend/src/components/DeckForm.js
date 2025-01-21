@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../services/api.js';
 import { TextField, Button } from '@mui/material';
+import styles from '../styles/shared.module.css';
 
 function DeckForm() {
   const navigate = useNavigate();
@@ -47,9 +48,9 @@ function DeckForm() {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className={styles.pageContainer}>
       <h1>Create New Deck</h1>
-      <div style={{ marginBottom: '1rem' }}>
+      <div className={styles.formField}>
         <TextField
           value={deckName}
           onChange={(e) => setDeckName(e.target.value)}
@@ -65,9 +66,9 @@ function DeckForm() {
         placeholder='Enter deck data here (dash-separated columns)'
         rows={10}
         cols={50}
-        style={{ width: '100%', marginBottom: '1rem' }}
+        className={styles.fullWidthTextarea}
       />
-      <div style={{ display: 'flex', gap: '1rem' }}>
+      <div className={styles.buttonGroup}>
         <Button
           variant='contained'
           onClick={handleAddDeck}

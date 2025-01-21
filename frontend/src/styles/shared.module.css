@@ -1,0 +1,26 @@
+.pageContainer {
+  padding: 2rem;
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.formField {
+  margin-bottom: 1rem;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+}
+
+.fullWidthTextarea {
+  width: 100%;
+  margin-bottom: 1rem;
+  min-height: 200px;
+  padding: 0.5rem;
+}
