@@ -17,13 +17,19 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteDeck from './DeleteDeck';
+import ExportDeck from './ExportDeck';
 import styles from '../styles/shared.module.css';
+import DownloadIcon from '@mui/icons-material/Download';
+import ImportDeck from './ImportDeck';
+import UploadIcon from '@mui/icons-material/Upload';
 
 function DeckManager() {
   const navigate = useNavigate();
   const [decks, setDecks] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deckToDelete, setDeckToDelete] = useState(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [deckToExport, setDeckToExport] = useState(null);
 
   useEffect(() => {
     fetchDecks();
@@ -55,19 +61,112 @@ function DeckManager() {
     }
   };
 
+  const handleExportClick = (deck) => {
+    setDeckToExport(deck);
+    setExportDialogOpen(true);
+  };
+
+  const handleExport = async (includeDifficulties) => {
+    try {
+      const [deckResponse, difficultiesResponse] = await Promise.all([
+        axios.get(`/decks/${deckToExport.id}`),
+        includeDifficulties
+          ? axios.get(`/decks/${deckToExport.id}/difficulties`)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const { headers, data } = deckResponse.data;
+      const difficulties = difficultiesResponse.data;
+
+      let content = '';
+
+      if (includeDifficulties) {
+        content = ['difficulty - ' + headers.join(' - ')]
+          .concat(
+            data.map((row, index) => {
+              const difficulty = difficulties[index]?.difficulty;
+              const difficultyLevel = difficulty
+                ? { easy: 1, normal: 2, challenging: 3, hard: 4 }[difficulty]
+                : 0;
+              return `${difficultyLevel} - ${headers
+                .map((h) => row[h] || '')
+                .join(' - ')}`;
+            })
+          )
+          .join('\n');
+      } else {
+        content = [headers.join(' - ')]
+          .concat(
+            data.map((row) => headers.map((h) => row[h] || '').join(' - '))
+          )
+          .join('\n');
+      }
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${deckToExport.name}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setExportDialogOpen(false);
+      setDeckToExport(null);
+    } catch (error) {
+      console.error('Error exporting deck:', error);
+      alert('Failed to export deck');
+    }
+  };
+
+  const handleImport = async (importData) => {
+    try {
+      // First create the deck
+      const deckResponse = await axios.post('/decks', {
+        name: importData.name,
+        headers: importData.headers,
+        data: importData.data,
+      });
+
+      // If difficulties were included, save them
+      if (importData.difficulties) {
+        await Promise.all(
+          importData.difficulties.map((diff, index) =>
+            diff.difficulty
+              ? axios.post(`/decks/${deckResponse.data.id}/difficulties`, {
+                  rowIndex: index,
+                  difficulty: diff.difficulty,
+                })
+              : Promise.resolve()
+          )
+        );
+      }
+
+      alert('Deck imported successfully!');
+      fetchDecks();
+    } catch (error) {
+      console.error('Error importing deck:', error);
+      alert('Failed to import deck');
+    }
+  };
+
   return (
     <div className={styles.pageContainer}>
       <Box className={styles.headerContainer}>
         <Typography variant='h4' component='h1'>
           Your Decks
         </Typography>
-        <Button
-          variant='contained'
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/new')}
-        >
-          New Deck
-        </Button>
+        <div className={styles.buttonGroup}>
+          <Button
+            variant='contained'
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/new')}
+          >
+            New Deck
+          </Button>
+          <ImportDeck onImport={handleImport} />
+        </div>
       </Box>
 
       <List>
@@ -98,6 +197,13 @@ function DeckManager() {
               </IconButton>
               <IconButton
                 edge='end'
+                onClick={() => handleExportClick(deck)}
+                sx={{ mr: 1, color: 'info.main' }}
+              >
+                <DownloadIcon />
+              </IconButton>
+              <IconButton
+                edge='end'
                 onClick={() => handleDeleteClick(deck)}
                 color='error'
               >
@@ -116,6 +222,16 @@ function DeckManager() {
         }}
         onConfirm={handleDeleteConfirm}
         deckName={deckToDelete?.name}
+      />
+
+      <ExportDeck
+        open={exportDialogOpen}
+        onClose={() => {
+          setExportDialogOpen(false);
+          setDeckToExport(null);
+        }}
+        onExport={handleExport}
+        deckName={deckToExport?.name}
       />
     </div>
   );
