@@ -1,5 +1,5 @@
 const express = require('express');
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const config = require('./config');
@@ -8,42 +8,68 @@ const app = express();
 const PORT = config.server.port;
 
 // Middleware
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? 'https://anki.drmr.eu' // Replace with your actual domain
+        : 'http://localhost:3123',
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
-app.use(cors());
 
-// Connect to PostgreSQL
-const pool = new Pool(config.db);
+// Create MySQL connection pool
+const pool = mysql.createPool(config.db);
 
-// Create table if not exists
-pool.query(`
-  CREATE TABLE IF NOT EXISTS decks (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    headers TEXT[],
-    data JSONB[]
-  );
-`);
+// Create tables if they don't exist
+async function initializeDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS decks (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        headers JSON,
+        data JSON
+      );
+    `);
 
-pool.query(`
-  CREATE TABLE IF NOT EXISTS deck_difficulties (
-    deck_id INTEGER REFERENCES decks(id) ON DELETE CASCADE,
-    row_index INTEGER,
-    difficulty VARCHAR(20),
-    PRIMARY KEY (deck_id, row_index)
-  );
-`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS deck_difficulties (
+        deck_id INT,
+        row_index INT,
+        difficulty VARCHAR(20),
+        PRIMARY KEY (deck_id, row_index),
+        FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
+      );
+    `);
+
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    process.exit(1);
+  }
+}
+
+initializeDatabase();
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Routes
 app.post('/decks', async (req, res) => {
   try {
     const { name, headers, data } = req.body;
-    const result = await pool.query(
-      'INSERT INTO decks (name, headers, data) VALUES ($1, $2, $3) RETURNING id',
-      [name, headers, data]
+    const [result] = await pool.query(
+      'INSERT INTO decks (name, headers, data) VALUES (?, ?, ?)',
+      [name, JSON.stringify(headers), JSON.stringify(data)]
     );
-    res
-      .status(201)
-      .json({ id: result.rows[0].id, message: 'Deck saved successfully' });
+    res.status(201).json({
+      id: result.insertId,
+      message: 'Deck saved successfully',
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Error saving deck');
@@ -53,8 +79,8 @@ app.post('/decks', async (req, res) => {
 // Get all decks (only id and name)
 app.get('/api/decks', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, name FROM decks');
-    res.json(result.rows);
+    const [rows] = await pool.query('SELECT id, name FROM decks');
+    res.json(rows);
   } catch (error) {
     console.error(error);
     res.status(500).send('Error fetching decks');
@@ -65,16 +91,16 @@ app.get('/api/decks', async (req, res) => {
 app.get('/decks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      'SELECT name, headers, data FROM decks WHERE id = $1',
+    const [rows] = await pool.query(
+      'SELECT name, headers, data FROM decks WHERE id = ?',
       [id]
     );
 
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).send('Deck not found');
     }
 
-    res.json(result.rows[0]);
+    res.json(rows[0]);
   } catch (error) {
     console.error(error);
     res.status(500).send('Error fetching deck');
@@ -87,16 +113,16 @@ app.put('/decks/:id', async (req, res) => {
     const { id } = req.params;
     const { name, headers, data } = req.body;
 
-    const result = await pool.query(
-      'UPDATE decks SET name = $1, headers = $2, data = $3 WHERE id = $4 RETURNING *',
-      [name, headers, data, id]
+    const [rows] = await pool.query(
+      'UPDATE decks SET name = ?, headers = ?, data = ? WHERE id = ?',
+      [name, JSON.stringify(headers), JSON.stringify(data), id]
     );
 
-    if (result.rows.length === 0) {
+    if (rows.affectedRows === 0) {
       return res.status(404).send('Deck not found');
     }
 
-    res.json(result.rows[0]);
+    res.json(rows[0]);
   } catch (error) {
     console.error(error);
     res.status(500).send('Error updating deck');
@@ -107,12 +133,9 @@ app.put('/decks/:id', async (req, res) => {
 app.delete('/decks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      'DELETE FROM decks WHERE id = $1 RETURNING *',
-      [id]
-    );
+    const [rows] = await pool.query('DELETE FROM decks WHERE id = ?', [id]);
 
-    if (result.rows.length === 0) {
+    if (rows.affectedRows === 0) {
       return res.status(404).send('Deck not found');
     }
 
@@ -127,13 +150,13 @@ app.delete('/decks/:id', async (req, res) => {
 app.get('/decks/:id/difficulties', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      'SELECT row_index, difficulty FROM deck_difficulties WHERE deck_id = $1',
+    const [rows] = await pool.query(
+      'SELECT row_index, difficulty FROM deck_difficulties WHERE deck_id = ?',
       [id]
     );
 
     // Convert to array format matching deck data indices
-    const difficulties = result.rows.reduce((acc, row) => {
+    const difficulties = rows.reduce((acc, row) => {
       acc[row.row_index] = row;
       return acc;
     }, {});
@@ -151,10 +174,7 @@ app.post('/decks/:id/difficulties', async (req, res) => {
     const { rowIndex, difficulty } = req.body;
 
     await pool.query(
-      `INSERT INTO deck_difficulties (deck_id, row_index, difficulty)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (deck_id, row_index) 
-       DO UPDATE SET difficulty = EXCLUDED.difficulty`,
+      'INSERT INTO deck_difficulties (deck_id, row_index, difficulty) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE difficulty = VALUES(difficulty)',
       [id, rowIndex, difficulty]
     );
 
@@ -163,6 +183,17 @@ app.post('/decks/:id/difficulties', async (req, res) => {
     console.error(error);
     res.status(500).send('Error saving difficulty');
   }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something broke!' });
+});
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
 });
 
 app.listen(PORT, () => {

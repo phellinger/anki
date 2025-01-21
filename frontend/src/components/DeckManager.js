@@ -2,23 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../services/api.js';
 import {
-  TextField,
   Button,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
+  Box,
+  Typography,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DeleteIcon from '@mui/icons-material/Delete';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import AddIcon from '@mui/icons-material/Add';
 import DeleteDeck from './DeleteDeck';
 
 function DeckManager() {
   const navigate = useNavigate();
-  const [newDeckText, setNewDeckText] = useState('');
-  const [deckName, setDeckName] = useState('');
   const [decks, setDecks] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deckToDelete, setDeckToDelete] = useState(null);
@@ -33,46 +34,6 @@ function DeckManager() {
       setDecks(response.data);
     } catch (error) {
       console.error('Error fetching decks:', error);
-    }
-  };
-
-  const handleAddDeck = async () => {
-    if (!deckName.trim()) {
-      alert('Please provide a deck name');
-      return;
-    }
-
-    const lines = newDeckText.trim().split('\n');
-    if (lines.length < 2) {
-      alert(
-        'Please provide at least two lines: one for headers and one for data.'
-      );
-      return;
-    }
-
-    const [headerLine, ...rows] = lines;
-    const headers = headerLine.split(' - ');
-    const data = rows.map((row) => {
-      const values = row.split('-');
-      return headers.reduce((acc, header, index) => {
-        acc[header] = values[index]?.trim() || '';
-        return acc;
-      }, {});
-    });
-
-    try {
-      const response = await axios.post('/decks', {
-        name: deckName,
-        headers,
-        data,
-      });
-      alert('Deck added successfully!');
-      setNewDeckText('');
-      setDeckName('');
-      navigate(`/edit/${response.data.id}`);
-    } catch (error) {
-      console.error(error);
-      alert('Failed to add deck.');
     }
   };
 
@@ -95,34 +56,26 @@ function DeckManager() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h1>Deck Manager</h1>
-      <div style={{ marginBottom: '1rem' }}>
-        <TextField
-          value={deckName}
-          onChange={(e) => setDeckName(e.target.value)}
-          placeholder='Enter deck name'
-          required
-          fullWidth
-          size='small'
-        />
-      </div>
-      <textarea
-        value={newDeckText}
-        onChange={(e) => setNewDeckText(e.target.value)}
-        placeholder='Enter deck data here (dash-separated columns)'
-        rows={10}
-        cols={50}
-        style={{ width: '100%', marginBottom: '1rem' }}
-      />
-      <div style={{ display: 'flex', gap: '1rem' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 4,
+        }}
+      >
+        <Typography variant='h4' component='h1'>
+          Your Decks
+        </Typography>
         <Button
           variant='contained'
-          onClick={handleAddDeck}
-          disabled={!deckName.trim()}
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/new')}
         >
-          Add Deck
+          New Deck
         </Button>
-      </div>
+      </Box>
+
       <List>
         {decks.map((deck) => (
           <ListItem key={deck.id}>
@@ -134,6 +87,13 @@ function DeckManager() {
                 sx={{ mr: 1, color: 'success.main' }}
               >
                 <PlayArrowIcon />
+              </IconButton>
+              <IconButton
+                edge='end'
+                onClick={() => navigate(`/statistics/${deck.id}`)}
+                sx={{ mr: 1, color: 'primary.main' }}
+              >
+                <BarChartIcon />
               </IconButton>
               <IconButton
                 edge='end'
@@ -153,6 +113,7 @@ function DeckManager() {
           </ListItem>
         ))}
       </List>
+
       <DeleteDeck
         open={deleteDialogOpen}
         onClose={() => {

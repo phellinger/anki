@@ -3,9 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const envContent = `
-POSTGRES_USER=${config.docker.postgres.user}
-POSTGRES_PASSWORD=${config.docker.postgres.password}
-POSTGRES_DB=${config.docker.postgres.database}
+MYSQL_ROOT_PASSWORD=${config.docker.mysql.password}
+MYSQL_DATABASE=${config.docker.mysql.database}
 `.trim();
 
 // Write to backend .env

@@ -1,25 +1,21 @@
-# Use a Node.js image for building the app
-FROM node:16 AS build
-
-# Set the working directory
+# Development stage
+FROM node:16 AS development
 WORKDIR /app
-
-# Copy package.json and install dependencies
-COPY package.json package-lock.json ./
+COPY package*.json ./
 RUN npm install
-
-# Copy the rest of the application code
 COPY . .
+CMD ["npm", "start"]
 
-# Build the React app
+# Production build stage
+FROM node:16 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
 RUN npm run build
 
-# Use a lightweight Nginx image to serve the built app
+# Production stage
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
-
-# Expose the default Nginx HTTP port
 EXPOSE 80
-
-# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
