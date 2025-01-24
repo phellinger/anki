@@ -154,7 +154,7 @@ function DeckManager() {
   return (
     <div className={styles.pageContainer}>
       <Box className={styles.headerContainer}>
-        <Typography variant='h4' component='h1'>
+        <Typography variant='h5' component='h1' sx={{ mb: { xs: 1, sm: 0 } }}>
           Your Decks
         </Typography>
         <div className={styles.buttonGroup}>
@@ -162,6 +162,7 @@ function DeckManager() {
             variant='contained'
             startIcon={<AddIcon />}
             onClick={() => navigate('/new')}
+            fullWidth={window.innerWidth < 600}
           >
             New Deck
           </Button>
@@ -169,47 +170,46 @@ function DeckManager() {
         </div>
       </Box>
 
-      <List>
+      <List sx={{ width: '100%' }}>
         {decks.map((deck) => (
-          <ListItem key={deck.id}>
-            <ListItemText primary={deck.name} />
-            <ListItemSecondaryAction>
+          <ListItem
+            key={deck.id}
+            sx={{
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 1, sm: 0 },
+            }}
+          >
+            <ListItemText primary={deck.name} sx={{ mb: { xs: 1, sm: 0 } }} />
+            <div className={styles.actionButtons}>
               <IconButton
-                edge='end'
                 onClick={() => navigate(`/play/${deck.id}`)}
-                sx={{ mr: 1, color: 'success.main' }}
+                sx={{ color: 'success.main' }}
               >
                 <PlayArrowIcon />
               </IconButton>
               <IconButton
-                edge='end'
                 onClick={() => navigate(`/statistics/${deck.id}`)}
-                sx={{ mr: 1, color: 'primary.main' }}
+                sx={{ color: 'primary.main' }}
               >
                 <BarChartIcon />
               </IconButton>
               <IconButton
-                edge='end'
                 onClick={() => navigate(`/edit/${deck.id}`)}
-                sx={{ mr: 1, color: 'warning.main' }}
+                sx={{ color: 'warning.main' }}
               >
                 <EditIcon />
               </IconButton>
               <IconButton
-                edge='end'
                 onClick={() => handleExportClick(deck)}
-                sx={{ mr: 1, color: 'info.main' }}
+                sx={{ color: 'info.main' }}
               >
                 <DownloadIcon />
               </IconButton>
-              <IconButton
-                edge='end'
-                onClick={() => handleDeleteClick(deck)}
-                color='error'
-              >
+              <IconButton onClick={() => handleDeleteClick(deck)} color='error'>
                 <DeleteIcon />
               </IconButton>
-            </ListItemSecondaryAction>
+            </div>
           </ListItem>
         ))}
       </List>

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Typography, Box, ButtonGroup, Paper } from '@mui/material';
 import axios from '../services/api.js';
+import styles from '../styles/card.module.css';
 
 const DIFFICULTY_WEIGHTS = {
   hard: 4,
   challenging: 3,
   normal: 2,
   easy: 1,
+  unreported: 5,
 };
 
 function PlayDeck() {
@@ -55,7 +57,7 @@ function PlayDeck() {
 
     // Calculate weighted probabilities
     const totalWeight = rows.reduce(
-      (sum, row) => sum + DIFFICULTY_WEIGHTS[row.difficulty || 'normal'],
+      (sum, row) => sum + DIFFICULTY_WEIGHTS[row.difficulty || 'unreported'],
       0
     );
 
@@ -63,7 +65,7 @@ function PlayDeck() {
     let selectedRow;
 
     for (const row of rows) {
-      random -= DIFFICULTY_WEIGHTS[row.difficulty || 'normal'];
+      random -= DIFFICULTY_WEIGHTS[row.difficulty || 'unreported'];
       if (random <= 0) {
         selectedRow = row;
         break;
@@ -123,43 +125,50 @@ function PlayDeck() {
   const hiddenContent = isLeftSide ? rightSideContent : leftSideContent;
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        p: 4,
-      }}
-    >
-      <Typography variant='h4' component='h1'>
+    <Box className={styles.cardContainer}>
+      <Typography
+        variant='h5'
+        component='h1'
+        sx={{
+          textAlign: 'center',
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+        }}
+      >
         {deck.name}
       </Typography>
 
       <Paper
         elevation={3}
+        className={styles.card}
         sx={{
-          p: 4,
-          minWidth: 300,
-          minHeight: 200,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          wordBreak: 'break-word',
         }}
       >
-        <Typography variant='h5' align='center'>
-          {showAnswer
-            ? currentRow[hiddenContent]
-            : currentRow[displayedContent]}
-        </Typography>
+        {currentRow && (
+          <Typography variant='h5'>
+            {showAnswer
+              ? currentRow[hiddenContent]
+              : currentRow[displayedContent]}
+          </Typography>
+        )}
       </Paper>
 
       {!showAnswer ? (
-        <Button variant='contained' onClick={handleShowClick} size='large'>
+        <Button
+          variant='contained'
+          onClick={handleShowClick}
+          size='large'
+          fullWidth={window.innerWidth < 600}
+        >
           Show
         </Button>
       ) : (
-        <ButtonGroup variant='contained' size='large'>
+        <ButtonGroup
+          variant='contained'
+          size='large'
+          orientation={window.innerWidth < 600 ? 'vertical' : 'horizontal'}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           <Button onClick={() => handleDifficultyClick('hard')} color='error'>
             Hard
           </Button>
@@ -178,7 +187,12 @@ function PlayDeck() {
         </ButtonGroup>
       )}
 
-      <Button variant='outlined' onClick={() => navigate('/')} sx={{ mt: 2 }}>
+      <Button
+        variant='outlined'
+        onClick={() => navigate('/')}
+        sx={{ mt: 2 }}
+        fullWidth={window.innerWidth < 600}
+      >
         Back to Decks
       </Button>
     </Box>
