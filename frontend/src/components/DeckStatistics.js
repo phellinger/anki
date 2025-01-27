@@ -49,8 +49,10 @@ function DeckStatistics() {
         unreported: 0,
       };
 
+      // Iterate through deck data indices
       deckData.data.forEach((_, index) => {
-        const difficulty = difficultyData[index]?.difficulty;
+        const difficultyEntry = difficultyData[index];
+        const difficulty = difficultyEntry?.difficulty;
         if (difficulty) {
           counts[difficulty]++;
         } else {

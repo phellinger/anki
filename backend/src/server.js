@@ -153,12 +153,14 @@ app.get('/decks/:id/difficulties', async (req, res) => {
     );
 
     // Convert to array format matching deck data indices
-    const difficulties = rows.reduce((acc, row) => {
-      acc[row.row_index] = row;
-      return acc;
-    }, {});
+    const difficulties = {};
+    rows.forEach((row) => {
+      difficulties[row.row_index] = {
+        difficulty: row.difficulty,
+      };
+    });
 
-    res.json(difficulties);
+    res.json(difficulties); // Return as an object with indices as keys
   } catch (error) {
     console.error(error);
     res.status(500).send('Error fetching difficulties');

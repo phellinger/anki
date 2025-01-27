@@ -1,7 +1,5 @@
 require('dotenv').config();
 
-const isDev = process.env.NODE_ENV !== 'production';
-
 module.exports = {
   db: {
     host: process.env.DB_HOST,
