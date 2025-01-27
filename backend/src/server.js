@@ -10,10 +10,7 @@ const PORT = config.server.port;
 // Middleware
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? 'https://anki.drmr.eu' // Replace with your actual domain
-        : 'http://localhost:3123',
+    origin: config.server.frontendUrl,
     credentials: true,
   })
 );
@@ -77,7 +74,7 @@ app.post('/decks', async (req, res) => {
 });
 
 // Get all decks (only id and name)
-app.get('/api/decks', async (req, res) => {
+app.get('/decks', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT id, name FROM decks');
     res.json(rows);

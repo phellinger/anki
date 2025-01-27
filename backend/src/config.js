@@ -15,5 +15,6 @@ module.exports = {
   },
   server: {
     port: parseInt(process.env.SERVER_PORT || '5193', 10),
+    frontendUrl: process.env.FRONTEND_URL,
   },
 };

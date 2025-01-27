@@ -37,7 +37,7 @@ function DeckManager() {
 
   const fetchDecks = async () => {
     try {
-      const response = await axios.get('/api/decks');
+      const response = await axios.get('/decks');
       setDecks(response.data);
     } catch (error) {
       console.error('Error fetching decks:', error);
