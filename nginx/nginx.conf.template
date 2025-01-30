@@ -1,12 +1,12 @@
 server {
     listen 80;
-    server_name ${FRONTEND_DOMAIN} ${API_DOMAIN};
+    server_name "${FRONTEND_DOMAIN}" "${API_DOMAIN}";
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name ${FRONTEND_DOMAIN};
+    server_name "${FRONTEND_DOMAIN}";
 
     ssl_certificate /etc/nginx/certs/${FRONTEND_DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/nginx/certs/${FRONTEND_DOMAIN}/privkey.pem;
@@ -29,7 +29,7 @@ server {
 
 server {
     listen 443 ssl;
-    server_name ${API_DOMAIN};
+    server_name "${API_DOMAIN}";
 
     ssl_certificate /etc/nginx/certs/${API_DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/nginx/certs/${API_DOMAIN}/privkey.pem;
