@@ -97,9 +97,32 @@ app.get('/decks/:id', async (req, res) => {
       return res.status(404).send('Deck not found');
     }
 
-    res.json(rows[0]);
+    // Add error handling for JSON parsing
+    let headers, data;
+    try {
+      headers = JSON.parse(rows[0].headers);
+      data = JSON.parse(rows[0].data);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return res.status(500).send('Error parsing deck data');
+    }
+
+    // Ensure headers and data are arrays
+    if (!Array.isArray(headers) || !Array.isArray(data)) {
+      console.error('Invalid data structure:', { headers, data });
+      return res.status(500).send('Invalid deck data structure');
+    }
+
+    const deck = {
+      name: rows[0].name,
+      headers: headers,
+      data: data,
+    };
+
+    console.log('Sending deck:', deck); // Debug log
+    res.json(deck);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching deck:', error);
     res.status(500).send('Error fetching deck');
   }
 });
