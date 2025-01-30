@@ -12,7 +12,13 @@ if ! command -v certbot &> /dev/null; then
 fi
 
 # Get SSL certificates if needed (using standalone mode)
-sudo certbot certonly --standalone -d ${FRONTEND_DOMAIN} -d ${API_DOMAIN}
+sudo certbot certonly --standalone \
+    --cert-name ${FRONTEND_DOMAIN} -d ${FRONTEND_DOMAIN} \
+    --cert-name ${API_DOMAIN} -d ${API_DOMAIN}
+
+# Create symbolic links to standardize certificate paths
+sudo mkdir -p /etc/letsencrypt/live/${FRONTEND_DOMAIN}
+sudo mkdir -p /etc/letsencrypt/live/${API_DOMAIN}
 
 # Stop any running containers
 docker-compose -f docker-compose.prod.yml down
