@@ -57,4 +57,4 @@ services:
       - backend
 
 volumes:
-  mysql_data:    driver: local
+  mysql_data:
