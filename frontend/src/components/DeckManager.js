@@ -170,8 +170,10 @@ function DeckManager() {
           <ListItem
             sx={{
               display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
               justifyContent: 'space-between',
-              alignItems: 'flex-start',
+              gap: { xs: 1, sm: 0 },
               borderBottom: 'none',
             }}
           >
@@ -181,6 +183,7 @@ function DeckManager() {
               sx={{
                 margin: 0,
                 paddingTop: '4px',
+                mb: { xs: 1, sm: 0 },
               }}
             >
               Your&nbsp;Decks
