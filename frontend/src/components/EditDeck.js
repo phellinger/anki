@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TextField, Button } from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/shared.module.css';
+import { formatDeckContent, parseDeckContent } from '../utils/deckFormat';
 
 function EditDeck() {
   const { deckId } = useParams();
@@ -20,14 +21,8 @@ function EditDeck() {
       const response = await axios.get(`/decks/${deckId}`);
       const { name, headers, data } = response.data;
 
-      // Convert deck data back to text format
-      const headerLine = headers.join(' - ');
-      const dataLines = data.map((row) =>
-        headers.map((header) => row[header] || '').join(' - ')
-      );
-
       setDeckName(name);
-      setDeckContent([headerLine, ...dataLines].join('\n'));
+      setDeckContent(formatDeckContent(headers, data));
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching deck:', error);
@@ -37,23 +32,7 @@ function EditDeck() {
 
   const handleSave = async () => {
     try {
-      const lines = deckContent.trim().split('\n');
-      if (lines.length < 2) {
-        alert(
-          'Please provide at least two lines: one for headers and one for data.'
-        );
-        return;
-      }
-
-      const [headerLine, ...rows] = lines;
-      const headers = headerLine.split(' - ');
-      const data = rows.map((row) => {
-        const values = row.split('-');
-        return headers.reduce((acc, header, index) => {
-          acc[header] = values[index]?.trim() || '';
-          return acc;
-        }, {});
-      });
+      const { headers, data } = parseDeckContent(deckContent);
 
       await axios.put(`/decks/${deckId}`, {
         name: deckName,
@@ -64,8 +43,12 @@ function EditDeck() {
       alert('Deck updated successfully!');
       navigate('/');
     } catch (error) {
-      console.error('Error updating deck:', error);
-      alert('Failed to update deck');
+      if (error.message) {
+        alert(error.message);
+      } else {
+        console.error('Error updating deck:', error);
+        alert('Failed to update deck');
+      }
     }
   };
 

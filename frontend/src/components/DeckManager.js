@@ -153,86 +153,117 @@ function DeckManager() {
 
   return (
     <div className={styles.pageContainer}>
-      <Box className={styles.headerContainer}>
-        <Typography variant='h5' component='h1' sx={{ mb: { xs: 1, sm: 0 } }}>
-          Your Decks
-        </Typography>
-        <div className={styles.buttonGroup}>
-          <Button
-            variant='contained'
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/new')}
-            fullWidth={window.innerWidth < 600}
-          >
-            New Deck
-          </Button>
-          <ImportDeck onImport={handleImport} />
-        </div>
-      </Box>
-
-      <List sx={{ width: '100%' }}>
-        {decks.map((deck) => (
+      <div className={styles.mainContainer}>
+        <List
+          sx={{
+            width: '100%',
+            padding: 0,
+            '& .MuiListItem-root': {
+              borderBottom: 'none', // Remove all ListItem borders
+            },
+            '& .MuiDivider-root': {
+              // Remove any dividers
+              display: 'none',
+            },
+          }}
+        >
           <ListItem
-            key={deck.id}
             sx={{
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' },
-              gap: { xs: 1, sm: 0 },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              borderBottom: 'none',
             }}
           >
-            <ListItemText primary={deck.name} sx={{ mb: { xs: 1, sm: 0 } }} />
-            <div className={styles.actionButtons}>
-              <IconButton
-                onClick={() => navigate(`/play/${deck.id}`)}
-                sx={{ color: 'success.main' }}
+            <Typography
+              variant='h5'
+              component='h1'
+              sx={{
+                margin: 0,
+                paddingTop: '4px',
+              }}
+            >
+              Your&nbsp;Decks
+            </Typography>
+            <div className={styles.buttonGroup}>
+              <Button
+                variant='contained'
+                startIcon={<AddIcon />}
+                onClick={() => navigate('/new')}
               >
-                <PlayArrowIcon />
-              </IconButton>
-              <IconButton
-                onClick={() => navigate(`/statistics/${deck.id}`)}
-                sx={{ color: 'primary.main' }}
-              >
-                <BarChartIcon />
-              </IconButton>
-              <IconButton
-                onClick={() => navigate(`/edit/${deck.id}`)}
-                sx={{ color: 'warning.main' }}
-              >
-                <EditIcon />
-              </IconButton>
-              <IconButton
-                onClick={() => handleExportClick(deck)}
-                sx={{ color: 'info.main' }}
-              >
-                <DownloadIcon />
-              </IconButton>
-              <IconButton onClick={() => handleDeleteClick(deck)} color='error'>
-                <DeleteIcon />
-              </IconButton>
+                New Deck
+              </Button>
+              <ImportDeck onImport={handleImport} />
             </div>
           </ListItem>
-        ))}
-      </List>
 
-      <DeleteDeck
-        open={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setDeckToDelete(null);
-        }}
-        onConfirm={handleDeleteConfirm}
-        deckName={deckToDelete?.name}
-      />
+          {decks.map((deck) => (
+            <ListItem
+              key={deck.id}
+              sx={{
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: { xs: 1, sm: 0 },
+                borderBottom: 'none',
+              }}
+            >
+              <ListItemText primary={deck.name} sx={{ mb: { xs: 1, sm: 0 } }} />
+              <div className={styles.actionButtons}>
+                <IconButton
+                  onClick={() => navigate(`/play/${deck.id}`)}
+                  sx={{ color: 'success.main' }}
+                >
+                  <PlayArrowIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => navigate(`/statistics/${deck.id}`)}
+                  sx={{ color: 'primary.main' }}
+                >
+                  <BarChartIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => navigate(`/edit/${deck.id}`)}
+                  sx={{ color: 'warning.main' }}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handleExportClick(deck)}
+                  sx={{ color: 'info.main' }}
+                >
+                  <DownloadIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handleDeleteClick(deck)}
+                  color='error'
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </div>
+            </ListItem>
+          ))}
+        </List>
 
-      <ExportDeck
-        open={exportDialogOpen}
-        onClose={() => {
-          setExportDialogOpen(false);
-          setDeckToExport(null);
-        }}
-        onExport={handleExport}
-        deckName={deckToExport?.name}
-      />
+        <DeleteDeck
+          open={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setDeckToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          deckName={deckToDelete?.name}
+        />
+
+        <ExportDeck
+          open={exportDialogOpen}
+          onClose={() => {
+            setExportDialogOpen(false);
+            setDeckToExport(null);
+          }}
+          onExport={handleExport}
+          deckName={deckToExport?.name}
+        />
+      </div>
     </div>
   );
 }

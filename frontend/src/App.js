@@ -10,7 +10,18 @@ import { Container } from '@mui/material';
 function App() {
   return (
     <Router>
-      <Container maxWidth='lg' sx={{ py: 4 }}>
+      <Container
+        maxWidth={false}
+        sx={{
+          py: 4,
+          px: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: '1200px',
+          minWidth: '400px',
+          mx: 'auto',
+          overflow: 'auto',
+        }}
+      >
         <Routes>
           <Route path='/' element={<DeckManager />} />
           <Route path='/new' element={<DeckForm />} />

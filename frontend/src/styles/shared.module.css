@@ -1,40 +1,50 @@
 .pageContainer {
   padding: 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.mainContainer {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  margin-top: 1rem;
+  padding: 0;
+  min-width: 400px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .headerContainer {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 2rem;
+  padding: 16px;
+  margin-bottom: 0;
+  width: 100%;
+  border-bottom: none !important;
 }
 
-@media (min-width: 600px) {
-  .pageContainer {
-    padding: 2rem;
-  }
-
-  .headerContainer {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-}
-
-.formField {
-  margin-bottom: 1rem;
+.headerTitle {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  padding: 0;
 }
 
 .buttonGroup {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 1rem;
+  justify-content: flex-start;
+  align-self: flex-start;
+  padding: 0;
 }
 
-@media (min-width: 600px) {
-  .buttonGroup {
-    gap: 1rem;
-  }
+.formField {
+  margin-bottom: 1rem;
+  width: 100%;
 }
 
 .fullWidthTextarea {
@@ -42,17 +52,109 @@
   margin-bottom: 1rem;
   min-height: 200px;
   padding: 0.5rem;
+  box-sizing: border-box;
 }
 
 .actionButtons {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-@media (min-width: 600px) {
+.deckList {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0;
+}
+
+.deckItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: none;
+  margin: 0;
+  background: none;
+}
+
+.deckItem:last-child {
+  border-bottom: none;
+}
+
+/* Remove the border-bottom from all items */
+.deckItem,
+.headerContainer {
+  border-bottom: none !important;
+}
+
+/* Mobile styles */
+@media (max-width: 600px) {
+  .pageContainer {
+    padding: 0.5rem;
+    min-width: 400px; /* Match App container min-width */
+    overflow: auto; /* Allow scrolling if needed */
+  }
+
+  .mainContainer {
+    min-width: 400px; /* Keep minimum width on mobile */
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+  }
+
+  .buttonGroup > * {
+    width: 100%;
+  }
+
+  .deckItem {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
   .actionButtons {
-    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 601px) {
+  .pageContainer {
+    padding: 2rem;
+  }
+
+  .headerContainer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .headerTitle {
+    padding-left: 8px;
+    margin: 0;
+    padding-top: 0;
+  }
+
+  .buttonGroup {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    justify-content: flex-end;
+    margin-right: 8px;
+    padding-bottom: 0;
+  }
+
+  .buttonGroup > * {
+    flex: 0 0 auto;
+  }
+
+  .actionButtons {
+    justify-content: flex-end;
   }
 }
