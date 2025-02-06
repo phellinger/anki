@@ -77,7 +77,15 @@ function DeckStatistics() {
 
   return (
     <div className={styles.cardContainer}>
-      <Typography variant='h4' component='h1'>
+      <Typography
+        variant='h5'
+        component='h1'
+        sx={{
+          textAlign: 'center',
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          fontWeight: 'bold',
+        }}
+      >
         {deck.name}
       </Typography>
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Typography, Box, ButtonGroup, Paper } from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/card.module.css';
+import DirectionToggle from './DirectionToggle';
 
 const DIFFICULTY_WEIGHTS = {
   hard: 4,
@@ -21,6 +22,7 @@ function PlayDeck() {
   const [isLeftSide, setIsLeftSide] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [rowsWithDifficulty, setRowsWithDifficulty] = useState([]);
+  const [direction, setDirection] = useState('both');
 
   useEffect(() => {
     fetchDeckAndDifficulties();
@@ -115,6 +117,30 @@ function PlayDeck() {
     setShowAnswer(true);
   };
 
+  const handleDirectionChange = (newDirection) => {
+    setDirection(newDirection);
+    setShowAnswer(false); // Reset card when direction changes
+  };
+
+  useEffect(() => {
+    if (!currentRow) return;
+
+    // Determine which side to show based on direction
+    switch (direction) {
+      case 'leftToRight':
+        setIsLeftSide(true);
+        break;
+      case 'rightToLeft':
+        setIsLeftSide(false);
+        break;
+      case 'both':
+        setIsLeftSide(Math.random() < 0.5);
+        break;
+      default:
+        setIsLeftSide(Math.random() < 0.5);
+    }
+  }, [currentRow, direction]);
+
   if (isLoading || !currentRow) {
     return <div>Loading...</div>;
   }
@@ -132,10 +158,28 @@ function PlayDeck() {
         sx={{
           textAlign: 'center',
           fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          fontWeight: 'bold',
         }}
       >
         {deck.name}
       </Typography>
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          my: 1,
+        }}
+      >
+        <Typography>{deck.headers[0]}</Typography>
+        <DirectionToggle
+          direction={direction}
+          onDirectionChange={handleDirectionChange}
+        />
+        <Typography>{deck.headers[1]}</Typography>
+      </Box>
 
       <Paper
         elevation={3}

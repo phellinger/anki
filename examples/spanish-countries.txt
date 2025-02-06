@@ -1,0 +1,126 @@
+spanish - english
+Islandia - Iceland
+Irlanda - Ireland
+Reino Unido - United Kingdom
+Gales - Wales
+Escocia - Scotland
+Inglaterra - England
+Noruega - Norway
+Suecia - Sweden
+Finlandia - Finland
+Rusia - Russia
+Portugal - Portugal
+Francia - France
+Mónaco - Monaco
+Bélgica - Belgium
+Países Bajos - Netherlands
+Alemania - Germany
+Dinamarca - Denmark
+Polonia - Poland
+Lituania - Lithuania
+Letonia - Latvia
+Estonia - Estonia
+Ucrania - Ukraine
+Rumania - Romania
+Grecia - Greece
+Croacia - Croatia
+Hungría - Hungary
+Austria - Austria
+Chequia - Czechia
+Eslovaquia - Slovakia
+Suiza - Switzerland
+Italia - Italy
+Ciudad del Vaticano - Vatican City
+Chipre - Cyprus
+Turquía - Turkey
+Siria - Syria
+Líbano - Lebanon
+Palestina - Palestine
+Arabia Saudita - Saudi Arabia
+Irak - Iraq
+Irán - Iran
+Kazajistán - Kazakhstan
+Afganistán - Afghanistan
+Pakistán - Pakistan
+India - India
+Sri Lanka - Sri Lanka
+Birmania - Myanmar
+Tailandia - Thailand
+Laos - Laos
+Camboya - Cambodia
+Vietnam - Vietnam
+Malasia - Malaysia
+Singapur - Singapore
+Indonesia - Indonesia
+Mongolia - Mongolia
+China - China
+Corea del Sur - South Korea
+Japón - Japan
+Taiwán - Taiwan
+Filipinas - Philippines
+Papúa Nueva Guinea - Papua New Guinea
+Australia - Australia
+Nueva Zelanda - New Zealand
+Palaos - Palau
+Micronesia - Micronesia
+Islas Marshall - Marshall Islands
+Samoa - Samoa
+Tonga - Tonga
+Fiyi - Fiji
+Argelia - Algeria
+Túnez - Tunisia
+Libia - Libya
+Egipto - Egypt
+Sudán - Sudan
+Etiopía - Ethiopia
+Yibuti - Djibouti
+Kenia - Kenya
+Tanzania - Tanzania
+Uganda - Uganda
+Ruanda - Rwanda
+Mozambique - Mozambique
+Zimbabue - Zimbabwe
+Namibia - Namibia
+Sudáfrica - South Africa
+Madagascar - Madagascar
+República Democrática del Congo - Democratic Republic of Congo
+Camerún - Cameroon
+República Centroafricana - Central African Republic
+Angola - Angola
+Chad - Chad
+Níger - Niger
+Nigeria - Nigeria
+Malí - Mali
+Benín - Benin
+Togo - Togo
+Ghana - Ghana
+Mauritania - Mauritania
+Sierra Leona - Sierra Leone
+Liberia - Liberia
+Burkina Faso - Burkina Faso
+Guinea - Guinea
+Guinea Bisseau - Guinea Bisseau
+Marruecos - Morocco
+Canadá - Canada
+Estados Unidos - United States
+México - Mexico
+Guatemala - Guatemala
+Belice - Belize
+Honduras - Honduras
+El Salvador - El Salvador
+Nicaragua - Nicaragua
+Panamá - Panama
+Costa Rica - Costa Rica
+Jamaica - Jamaica
+Cuba - Cuba
+Haití - Haiti
+República Dominicana - Dominican Republic
+Trinidad y Tobago - Trinidad and Tobago
+Colombia - Colombia
+Venezuela - Venezuela
+Brasil - Brazil
+Uruguay - Uruguay
+Argentina - Argentina
+Bolivia - Bolivia
+Chile - Chile
+Perú - Peru

@@ -1,0 +1,126 @@
+spanish - english
+islandés - Icelandic
+irlandes - Irish
+británico - British
+galés - Welsh
+escocés - Scottish
+inglés - English
+noruego - Norwegian
+sueco - Swedish
+finlandés - Finnish
+ruso - Russian
+portugués - Portuguese
+francés - French
+monegasco - Monégasque
+belga - Belgian
+neerlandés - Dutch
+alemán - German
+danés - Danish
+polaco - Polish
+lituano - Lithuanian
+letón - Latvian
+estonio - Estonian
+ucraniano - Ukrainian
+rumano - Romanian
+griego - Greek
+croata - Croatian
+húngaro - Hungarian
+austriaco - Austrian
+checo - Czech
+eslovaco - Slovakian
+suizo - Swiss
+italiano - Italian
+vaticano - Vaticanian or Vaticano
+chipriota - Cypriot
+turco - Turkish
+sirio - Syrian
+libanés - Lebanese
+palestino - Palestinian
+saudí - Saudi Arabian
+iraquí - Iraqi
+iraní - Iranian
+kazajo - Kazakhstani or Kazakh
+afgano - Afghanistani or Afghan
+pakistaní - Pakistani
+indio - Indian
+esrilanqués - Sri Lankan
+birmano - Burmese
+tailandés - Thai
+laosiano - Laotian
+camboyano - Cambodian
+vietnamita - Vietnamese
+malasio - Malaysian
+singapurense - Singaporean
+indonés - Indonesia
+mongol - Mongolian
+chino - Chinese
+surcoreano - South Korean
+japonés - Japanese
+taiwanés - Taiwanese
+filipino - Filipino
+papú  - Papua New Guinean
+australiano - Australian
+neozelandés - New Zealander
+palauano - Palauan
+micronesio - Micronesian
+marshalés - Marshallese
+samoano - Samoan
+tongano - Tongan
+fiyiano - Fijian
+argelino - Algerian
+tunecino - Tunisian
+libio - Libyan
+egipcio - Egyptian
+sudanés - Sudanese
+etíope - Ethiopian
+yibutiano - Djiboutian
+keniano - Kenyan
+tanzano - Tanzanian
+ugandés - Ugandan
+ruandés - Rwandan
+mozambiqueño - Mozambican
+zimbabuense - Zimbabwean
+namibio - Namibian
+sudafricano - South African
+malgache - Malagasy
+congoleño - Congolese
+camerunés - Cameroonian
+centroafricano - Central African
+angoleño - Angolan
+chadiano - Chadian
+nigerino - Nigerien
+nigeriano - Nigerian
+maliense - Malian
+beninés - Beninese
+togolés - Togolese
+ghanés - Ghanaian
+mauritano - Mauritanian
+sierraleonés - Sierra Leonean
+liberiano - Liberian
+burkinés - Burkinabè
+guineano - Guinean
+bisauguineano - Bissau-Guinean
+marroquí - Moroccan
+canadiense - Canadian
+estadounidense - American
+mexicano - Mexican
+guatemalteco - Guatemalan
+beliceño - Belizean
+hondureño - Honduran
+salvadoreño - Salvadorian
+nicaragüense - Nicaraguan
+panameño - Panamanian
+costarricense - Costa Rican
+jamaiquino - Jamaican
+cubano - Cuban
+haitiano - Haitian
+dominicano - Dominican
+trinitense - Trinidadian or Tobagonian
+colombiano - Colombian
+venezolano - Venezuelan
+brasileño - Brazilian
+uruguayo - Uruguayan
+argentino - Argentinian
+boliviano - Bolivian
+chileno - Chilean
+peruano - Peruvian

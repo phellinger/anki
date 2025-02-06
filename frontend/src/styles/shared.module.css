@@ -10,7 +10,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   margin-top: 1rem;
   padding: 0;
-  min-width: 400px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -90,12 +89,8 @@
 @media (max-width: 599px) {
   .pageContainer {
     padding: 0.5rem;
-    min-width: 400px;
+    min-width: 390px;
     overflow: auto;
-  }
-
-  .mainContainer {
-    min-width: 400px;
   }
 
   .buttonGroup {

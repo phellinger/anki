@@ -167,12 +167,12 @@ app.put('/decks/:id', async (req, res) => {
 
     res.json(rows[0]);
   } catch (error) {
-    console.error(error);
+    console.error('Error updating deck:', error);
     res.status(500).send('Error updating deck');
   }
 });
 
-// Add delete endpoint
+// Delete a deck
 app.delete('/decks/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -184,12 +184,12 @@ app.delete('/decks/:id', async (req, res) => {
 
     res.json({ message: 'Deck deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.error('Error deleting deck:', error);
     res.status(500).send('Error deleting deck');
   }
 });
 
-// Add new endpoints
+// Get deck difficulties
 app.get('/decks/:id/difficulties', async (req, res) => {
   try {
     const { id } = req.params;
@@ -198,7 +198,6 @@ app.get('/decks/:id/difficulties', async (req, res) => {
       [id]
     );
 
-    // Convert to array format matching deck data indices
     const difficulties = {};
     rows.forEach((row) => {
       difficulties[row.row_index] = {
@@ -206,9 +205,9 @@ app.get('/decks/:id/difficulties', async (req, res) => {
       };
     });
 
-    res.json(difficulties); // Return as an object with indices as keys
+    res.json(difficulties);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching difficulties:', error);
     res.status(500).send('Error fetching difficulties');
   }
 });

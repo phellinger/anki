@@ -12,23 +12,13 @@ export const SEPARATORS = {
 
 // Functions for consistent formatting
 export const splitLine = (line) => {
-  console.log('Original line:', line);
-  console.log('Contains en dash:', line.includes(SEPARATORS.EN_DASH));
-  console.log(
-    'Line characters:',
-    Array.from(line).map((c) => c.charCodeAt(0))
-  );
-
   const parts = line.split(SEPARATORS.INPUT_REGEX);
-  console.log('After regex split:', parts);
 
   if (parts.length > 1 || !line.includes(SEPARATORS.EN_DASH)) {
     return parts;
   }
 
   const enDashParts = line.split(SEPARATORS.EN_DASH).map((part) => part.trim());
-  console.log('After en dash split:', enDashParts);
-
   return enDashParts;
 };
 

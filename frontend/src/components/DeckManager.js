@@ -158,6 +158,7 @@ function DeckManager() {
           sx={{
             width: '100%',
             padding: 0,
+            mt: 3,
             '& .MuiListItem-root': {
               borderBottom: 'none', // Remove all ListItem borders
             },
@@ -178,12 +179,14 @@ function DeckManager() {
             }}
           >
             <Typography
-              variant='h5'
+              variant='h4'
               component='h1'
               sx={{
                 margin: 0,
                 paddingTop: '4px',
                 mb: { xs: 1, sm: 0 },
+                fontWeight: 'bold',
+                fontSize: { xs: '1.5rem', sm: '2rem' },
               }}
             >
               Your&nbsp;Decks
