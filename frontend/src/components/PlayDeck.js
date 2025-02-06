@@ -4,14 +4,11 @@ import { Button, Typography, Box, ButtonGroup, Paper } from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/card.module.css';
 import DirectionToggle from './DirectionToggle';
-
-const DIFFICULTY_WEIGHTS = {
-  hard: 4,
-  challenging: 3,
-  normal: 2,
-  easy: 1,
-  unreported: 5,
-};
+import {
+  DIFFICULTIES,
+  DIFFICULTY_WEIGHTS,
+  DIFFICULTY_COLORS_MUI,
+} from '../constants/difficulties';
 
 function PlayDeck() {
   const { deckId } = useParams();
@@ -213,20 +210,29 @@ function PlayDeck() {
           orientation={window.innerWidth < 600 ? 'vertical' : 'horizontal'}
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
-          <Button onClick={() => handleDifficultyClick('hard')} color='error'>
-            Hard
+          <Button
+            onClick={() => handleDifficultyClick(DIFFICULTIES.EASY)}
+            color={DIFFICULTY_COLORS_MUI[DIFFICULTIES.EASY]}
+          >
+            Easy
           </Button>
           <Button
-            onClick={() => handleDifficultyClick('challenging')}
-            color='warning'
+            onClick={() => handleDifficultyClick(DIFFICULTIES.NORMAL)}
+            color={DIFFICULTY_COLORS_MUI[DIFFICULTIES.NORMAL]}
+          >
+            Normal
+          </Button>
+          <Button
+            onClick={() => handleDifficultyClick(DIFFICULTIES.CHALLENGING)}
+            color={DIFFICULTY_COLORS_MUI[DIFFICULTIES.CHALLENGING]}
           >
             Challenging
           </Button>
-          <Button onClick={() => handleDifficultyClick('normal')} color='info'>
-            Normal
-          </Button>
-          <Button onClick={() => handleDifficultyClick('easy')} color='success'>
-            Easy
+          <Button
+            onClick={() => handleDifficultyClick(DIFFICULTIES.HARD)}
+            color={DIFFICULTY_COLORS_MUI[DIFFICULTIES.HARD]}
+          >
+            Hard
           </Button>
         </ButtonGroup>
       )}

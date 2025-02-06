@@ -4,14 +4,7 @@ import { Typography, Box, Button, Paper } from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/card.module.css';
 import sharedStyles from '../styles/shared.module.css';
-
-const DIFFICULTY_COLORS = {
-  hard: '#d32f2f', // error.main
-  challenging: '#ed6c02', // warning.main
-  normal: '#0288d1', // info.main
-  easy: '#2e7d32', // success.main
-  unreported: '#9e9e9e', // grey[500]
-};
+import { DIFFICULTY_COLORS, DIFFICULTY_ORDER } from '../constants/difficulties';
 
 function DeckStatistics() {
   const { deckId } = useParams();
@@ -90,17 +83,17 @@ function DeckStatistics() {
       </Typography>
 
       <Paper elevation={3} className={styles.statisticsCard}>
-        {Object.entries(difficulties).map(([difficulty, count]) => (
+        {DIFFICULTY_ORDER.map((difficulty) => (
           <Box key={difficulty} className={styles.statisticsBar}>
             <Box
               className={styles.barContent}
               sx={{
                 bgcolor: DIFFICULTY_COLORS[difficulty],
-                height: `${(count / maxCount) * 250}px`,
+                height: `${(difficulties[difficulty] / maxCount) * 250}px`,
               }}
             />
             <Typography variant='body2' sx={{ mt: 1 }}>
-              {count}
+              {difficulties[difficulty]}
             </Typography>
             <Typography variant='body2' sx={{ textTransform: 'capitalize' }}>
               {difficulty}

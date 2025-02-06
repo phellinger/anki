@@ -1,0 +1,38 @@
+export const DIFFICULTIES = {
+  EASY: 'easy',
+  NORMAL: 'normal',
+  CHALLENGING: 'challenging',
+  HARD: 'hard',
+  UNREPORTED: 'unreported',
+};
+
+export const DIFFICULTY_ORDER = [
+  DIFFICULTIES.EASY,
+  DIFFICULTIES.NORMAL,
+  DIFFICULTIES.CHALLENGING,
+  DIFFICULTIES.HARD,
+  DIFFICULTIES.UNREPORTED,
+];
+
+export const DIFFICULTY_COLORS = {
+  [DIFFICULTIES.HARD]: '#d32f2f', // error.main
+  [DIFFICULTIES.CHALLENGING]: '#ed6c02', // warning.main
+  [DIFFICULTIES.NORMAL]: '#0288d1', // info.main
+  [DIFFICULTIES.EASY]: '#2e7d32', // success.main
+  [DIFFICULTIES.UNREPORTED]: '#9e9e9e', // grey[500]
+};
+
+export const DIFFICULTY_WEIGHTS = {
+  [DIFFICULTIES.HARD]: 4,
+  [DIFFICULTIES.CHALLENGING]: 3,
+  [DIFFICULTIES.NORMAL]: 2,
+  [DIFFICULTIES.EASY]: 1,
+  [DIFFICULTIES.UNREPORTED]: 5,
+};
+
+export const DIFFICULTY_COLORS_MUI = {
+  [DIFFICULTIES.HARD]: 'error',
+  [DIFFICULTIES.CHALLENGING]: 'warning',
+  [DIFFICULTIES.NORMAL]: 'info',
+  [DIFFICULTIES.EASY]: 'success',
+};
