@@ -8,23 +8,30 @@ services:
     ports:
       - "3351:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     command: 
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 5s
+      test: mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    networks:
+      - app_network
 
   backend:
     build:
       context: ./backend
+      target: development
     container_name: backend
     ports:
       - "5193:5193"
@@ -34,15 +41,17 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-    restart: on-failure
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    env_file:
+      - .env.dev
+    restart: unless-stopped
+    networks:
+      - app_network
+    healthcheck:
+      test: wget --spider -q http://localhost:5193/health
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   frontend:
     build: 
@@ -60,6 +69,18 @@ services:
     command: npm start
     depends_on:
       - backend
+    networks:
+      - app_network
+    healthcheck:
+      test: wget --spider -q http://localhost:3123
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  app_network:
+    driver: bridge
 
 volumes:
   mysql_data:
