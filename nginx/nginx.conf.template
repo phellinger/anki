@@ -1,3 +1,7 @@
+# Add at the top of the file
+error_log /var/log/nginx/error.log debug;
+access_log /var/log/nginx/access.log;
+
 server {
     listen 80;
     server_name "${FRONTEND_DOMAIN}" "${API_DOMAIN}";
@@ -24,6 +28,10 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+
+        # Add error logging
+        proxy_intercept_errors on;
+        error_log /var/log/nginx/frontend_error.log debug;
     }
 }
 
@@ -41,5 +49,9 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+
+        # Add error logging
+        proxy_intercept_errors on;
+        error_log /var/log/nginx/backend_error.log debug;
     }
 } 

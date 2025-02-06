@@ -1,18 +1,25 @@
-# Use Node.js as the base image
-FROM node:16
+# Development stage
+FROM node:16 AS development
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+CMD ["npm", "start"]
 
-# Set the working directory
+# Production stage
+FROM node:16
 WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY package.json ./
-RUN npm install
+# Copy package files first to leverage Docker cache
+COPY package*.json ./
+RUN npm install --production
 
-# Copy the rest of the application code
-COPY . .
+# Copy source files needed for build
+COPY src/ ./src/
 
-# Expose the port the app runs on
+# Add environment configuration
+ARG NODE_ENV=production
+ENV NODE_ENV=$NODE_ENV
+
 EXPOSE 5193
-
-# Start the server
 CMD ["npm", "start"]

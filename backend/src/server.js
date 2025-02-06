@@ -5,7 +5,14 @@ const cors = require('cors');
 const config = require('./config');
 
 const app = express();
-const PORT = config.server.port;
+const PORT = config.server.port || 5193;
+
+// Add more logging
+console.log('Starting server with config:', {
+  port: PORT,
+  frontendUrl: config.server.frontendUrl,
+  dbHost: config.db.host,
+});
 
 // Middleware
 app.use(
@@ -97,13 +104,29 @@ app.get('/decks/:id', async (req, res) => {
       return res.status(404).send('Deck not found');
     }
 
+    console.log('Raw data from DB:', {
+      name: rows[0].name,
+      headers: rows[0].headers,
+      data: rows[0].data,
+    });
+
     // Add error handling for JSON parsing
     let headers, data;
     try {
-      headers = JSON.parse(rows[0].headers);
-      data = JSON.parse(rows[0].data);
+      // Check if headers/data are already objects
+      headers =
+        typeof rows[0].headers === 'string'
+          ? JSON.parse(rows[0].headers)
+          : rows[0].headers;
+
+      data =
+        typeof rows[0].data === 'string'
+          ? JSON.parse(rows[0].data)
+          : rows[0].data;
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
+      console.error('Raw headers:', rows[0].headers);
+      console.error('Raw data:', rows[0].data);
       return res.status(500).send('Error parsing deck data');
     }
 
@@ -119,7 +142,7 @@ app.get('/decks/:id', async (req, res) => {
       data: data,
     };
 
-    console.log('Sending deck:', deck); // Debug log
+    console.log('Sending deck:', deck);
     res.json(deck);
   } catch (error) {
     console.error('Error fetching deck:', error);
@@ -218,6 +241,6 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

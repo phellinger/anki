@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Load environment variables
+# Load environment variables and export them
 set -a
 source .env.prod
 set +a
+
+# Create Docker network if it doesn't exist
+docker network create app_network || true
 
 # Install certbot if not present
 if ! command -v certbot &> /dev/null; then
@@ -13,8 +16,10 @@ fi
 
 # Get SSL certificates if needed (using standalone mode)
 sudo certbot certonly --standalone \
+    --keep-until-expiring \
     --cert-name ${FRONTEND_DOMAIN} -d ${FRONTEND_DOMAIN} \
-    --cert-name ${API_DOMAIN} -d ${API_DOMAIN}
+    --cert-name ${API_DOMAIN} -d ${API_DOMAIN} \
+    --non-interactive
 
 # Create symbolic links to standardize certificate paths
 sudo mkdir -p /etc/letsencrypt/live/${FRONTEND_DOMAIN}
@@ -22,6 +27,9 @@ sudo mkdir -p /etc/letsencrypt/live/${API_DOMAIN}
 
 # Stop any running containers
 docker-compose -f docker-compose.prod.yml down
+
+# Export variables for docker-compose
+export $(cat .env.prod | grep -v '^#' | xargs)
 
 # Build and start containers
 docker-compose -f docker-compose.prod.yml up -d --build 
