@@ -1,0 +1,53 @@
+spanish - english
+el ajedrez - chess
+el atletismo - athletics (track and field)
+el bádminton - badminton
+el baloncesto - basketball
+el béisbol - baseball
+el billar - pool
+los bolos - bowling
+el boxeo - boxing
+la carrera de BMX - BMX racing
+la carrera de caballos - horse racing
+el ciclismo - cycling
+el ciclismo de montaña - mountain biking
+el correr - running
+el críquet - cricket
+la escalada - rock climbing
+la equitación - equestrian
+la esgrima - fencing
+el esquí - ski
+el esquí de fondo - cross-country skiing
+el fútbol - football / soccer
+el fútbol americano - American football
+la gimnasia - gymnastics
+el golf - golf
+el hockey sobre césped - hockey
+el hockey sobre hielo - ice hockey
+el judo - judo
+el kárate - karate
+el kayak - kayaking
+el levantamiento de pesas - weightlifting
+la lucha de sumo - sumo wrestling
+la natación - swimming
+el paintball - paintball
+el patinaje artístico sobre hielo - ice skating
+el polo - polo
+el rafting - rafting
+el rugby - rugby
+el salto - diving
+el salto de esquí - ski jumping
+el snowboarding - snowboarding
+el sóftbol - softball
+el squash - squash
+el surf - surfing
+el tenis - tennis
+el tenis de mesa - table tennis
+el tiro con arco - archery
+el tiro al blanco - shooting
+el trampolín - trampoline
+el triatlón - triathlon
+el trotar / el trote - jogging
+la vela / el velerismo - yachting
+el voleibol - volleyball
+el waterpolo / el polo acuático - waterpolo

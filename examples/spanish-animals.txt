@@ -1,0 +1,61 @@
+spanish - english
+el pájaro - the bird
+el toro - the bull
+el gato - the cat
+el pollo - the chicken
+la vaca - the cow
+el perro - the dog
+el burro - the donkey
+el pato - the duck
+el pez - the fish
+la cabra - the goat
+la gallina - the hen
+el caballo - the horse
+el cerdo - the pig
+el cachorro - the puppy
+el conejo - the rabbit
+el gallo - the rooster
+la oveja - the sheep
+la tortuga - the turtle
+el águila - eagle
+el oso - bear
+el ciervo - deer
+el dinosaurio - dinosaur
+el elefante - elephant
+el gorila - gorilla
+el león - lion
+el lagarto - lizard
+el mono - monkey
+el ratón - mouse
+el búho - owl
+la serpiente - snake
+el tigre - tiger
+la araña - spider
+la cebra - zebra
+el caracol - snail
+el cocodrilo - crocodile
+el escarabajo - beetle
+el hipopótamo - hippopotamus
+la hormiga - ant
+la jirafa - giraffe
+la mosca - fly
+el zorro - fox
+el lobo - wolf
+el canguro - kangaroo
+el murciélago - bat
+la paloma - pigeon
+la abeja - bee
+la mariposa - butterfly
+el delfín - dolphin
+el pulpo - octopus
+la orca - orca
+el salmón - salmon
+el tiburón - shark
+el atún - tuna
+la ballena - whale
+el cangrejo - crab
+la foca - seal
+el pingüino - penguin
+el calamar - squid
+la langosta - lobster
+la medusa - jellyfish

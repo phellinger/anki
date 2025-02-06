@@ -7,13 +7,6 @@ const config = require('./config');
 const app = express();
 const PORT = config.server.port || 5193;
 
-// Add more logging
-console.log('Starting server with config:', {
-  port: PORT,
-  frontendUrl: config.server.frontendUrl,
-  dbHost: config.db.host,
-});
-
 // Middleware
 app.use(
   cors({
@@ -103,12 +96,6 @@ app.get('/decks/:id', async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).send('Deck not found');
     }
-
-    console.log('Raw data from DB:', {
-      name: rows[0].name,
-      headers: rows[0].headers,
-      data: rows[0].data,
-    });
 
     // Add error handling for JSON parsing
     let headers, data;
