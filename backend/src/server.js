@@ -41,6 +41,16 @@ async function initializeDatabase() {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS deck_settings (
+        deck_id INT PRIMARY KEY,
+        direction VARCHAR(20) DEFAULT 'both',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE
+      );
+    `);
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -213,6 +223,49 @@ app.post('/decks/:id/difficulties', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send('Error saving difficulty');
+  }
+});
+
+// Add new routes for deck settings
+app.get('/decks/:id/settings', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.query(
+      'SELECT direction FROM deck_settings WHERE deck_id = ?',
+      [id]
+    );
+
+    if (rows.length === 0) {
+      // Create default settings if none exist
+      await pool.query(
+        'INSERT INTO deck_settings (deck_id, direction) VALUES (?, ?)',
+        [id, 'both']
+      );
+      return res.json({ direction: 'both' });
+    }
+
+    res.json({ direction: rows[0].direction });
+  } catch (error) {
+    console.error('Error fetching deck settings:', error);
+    res.status(500).send('Error fetching deck settings');
+  }
+});
+
+app.put('/decks/:id/settings', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { direction } = req.body;
+
+    const [result] = await pool.query(
+      'INSERT INTO deck_settings (deck_id, direction) VALUES (?, ?) ' +
+        'ON DUPLICATE KEY UPDATE direction = VALUES(direction)',
+      [id, direction]
+    );
+
+    res.json({ message: 'Settings updated successfully' });
+  } catch (error) {
+    console.error('Error updating deck settings:', error);
+    res.status(500).send('Error updating deck settings');
   }
 });
 

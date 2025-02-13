@@ -22,18 +22,21 @@ function PlayDeck() {
   const [direction, setDirection] = useState('both');
 
   useEffect(() => {
-    fetchDeckAndDifficulties();
+    fetchDeckAndSettings();
   }, [deckId]);
 
-  const fetchDeckAndDifficulties = async () => {
+  const fetchDeckAndSettings = async () => {
     try {
-      const [deckResponse, difficultiesResponse] = await Promise.all([
-        axios.get(`/decks/${deckId}`),
-        axios.get(`/decks/${deckId}/difficulties`),
-      ]);
+      const [deckResponse, difficultiesResponse, settingsResponse] =
+        await Promise.all([
+          axios.get(`/decks/${deckId}`),
+          axios.get(`/decks/${deckId}/difficulties`),
+          axios.get(`/decks/${deckId}/settings`),
+        ]);
 
       const deckData = deckResponse.data;
       const difficulties = difficultiesResponse.data;
+      const settings = settingsResponse.data;
 
       // Combine deck data with difficulties
       const rowsWithDiff = deckData.data.map((row, index) => ({
@@ -43,6 +46,7 @@ function PlayDeck() {
 
       setDeck(deckData);
       setRowsWithDifficulty(rowsWithDiff);
+      setDirection(settings.direction);
       pickNewRow(deckData, rowsWithDiff);
       setIsLoading(false);
     } catch (error) {
@@ -114,9 +118,16 @@ function PlayDeck() {
     setShowAnswer(true);
   };
 
-  const handleDirectionChange = (newDirection) => {
+  const handleDirectionChange = async (newDirection) => {
     setDirection(newDirection);
     setShowAnswer(false); // Reset card when direction changes
+
+    try {
+      await axios.put(`/decks/${deckId}/settings`, { direction: newDirection });
+    } catch (error) {
+      console.error('Error saving direction:', error);
+      // Continue with local state even if save fails
+    }
   };
 
   useEffect(() => {
