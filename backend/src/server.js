@@ -51,6 +51,25 @@ async function initializeDatabase() {
       );
     `);
 
+    // Add skip_easy column if it doesn't exist
+    await pool
+      .query(
+        `
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_NAME = 'deck_settings' 
+      AND COLUMN_NAME = 'skip_easy'
+    `
+      )
+      .then(async ([result]) => {
+        if (result[0].count === 0) {
+          await pool.query(`
+          ALTER TABLE deck_settings
+          ADD COLUMN skip_easy BOOLEAN DEFAULT false
+        `);
+        }
+      });
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -139,7 +158,6 @@ app.get('/decks/:id', async (req, res) => {
       data: data,
     };
 
-    console.log('Sending deck:', deck);
     res.json(deck);
   } catch (error) {
     console.error('Error fetching deck:', error);
@@ -231,20 +249,20 @@ app.get('/decks/:id/settings', async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await pool.query(
-      'SELECT direction FROM deck_settings WHERE deck_id = ?',
+      'SELECT direction, skip_easy FROM deck_settings WHERE deck_id = ?',
       [id]
     );
 
     if (rows.length === 0) {
       // Create default settings if none exist
       await pool.query(
-        'INSERT INTO deck_settings (deck_id, direction) VALUES (?, ?)',
-        [id, 'both']
+        'INSERT INTO deck_settings (deck_id, direction, skip_easy) VALUES (?, ?, ?)',
+        [id, 'both', false]
       );
-      return res.json({ direction: 'both' });
+      return res.json({ direction: 'both', skip_easy: false });
     }
 
-    res.json({ direction: rows[0].direction });
+    res.json({ direction: rows[0].direction, skip_easy: rows[0].skip_easy });
   } catch (error) {
     console.error('Error fetching deck settings:', error);
     res.status(500).send('Error fetching deck settings');
@@ -254,12 +272,12 @@ app.get('/decks/:id/settings', async (req, res) => {
 app.put('/decks/:id/settings', async (req, res) => {
   try {
     const { id } = req.params;
-    const { direction } = req.body;
+    const { direction, skip_easy } = req.body;
 
     const [result] = await pool.query(
-      'INSERT INTO deck_settings (deck_id, direction) VALUES (?, ?) ' +
-        'ON DUPLICATE KEY UPDATE direction = VALUES(direction)',
-      [id, direction]
+      'INSERT INTO deck_settings (deck_id, direction, skip_easy) VALUES (?, ?, ?) ' +
+        'ON DUPLICATE KEY UPDATE direction = VALUES(direction), skip_easy = VALUES(skip_easy)',
+      [id, direction, skip_easy]
     );
 
     res.json({ message: 'Settings updated successfully' });

@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Typography, Box, ButtonGroup, Paper } from '@mui/material';
+import {
+  Button,
+  Typography,
+  Box,
+  ButtonGroup,
+  Paper,
+  FormControlLabel,
+  Checkbox,
+} from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/card.module.css';
 import DirectionToggle from './DirectionToggle';
@@ -20,6 +28,7 @@ function PlayDeck() {
   const [isLoading, setIsLoading] = useState(true);
   const [rowsWithDifficulty, setRowsWithDifficulty] = useState([]);
   const [direction, setDirection] = useState('both');
+  const [skipEasy, setSkipEasy] = useState(false);
 
   useEffect(() => {
     fetchDeckAndSettings();
@@ -47,7 +56,8 @@ function PlayDeck() {
       setDeck(deckData);
       setRowsWithDifficulty(rowsWithDiff);
       setDirection(settings.direction);
-      pickNewRow(deckData, rowsWithDiff);
+      setSkipEasy(settings.skip_easy);
+      pickNewRow(deckData, rowsWithDiff, settings.skip_easy);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching deck:', error);
@@ -55,11 +65,25 @@ function PlayDeck() {
     }
   };
 
-  const pickNewRow = (deckData, rows = rowsWithDifficulty) => {
+  const pickNewRow = (
+    deckData,
+    rows = rowsWithDifficulty,
+    skipEasyCards = skipEasy
+  ) => {
     if (!deckData || !rows || rows.length === 0) return;
 
+    // Filter out easy cards if skipEasyCards is true
+    const availableRows = skipEasyCards
+      ? rows.filter((row) => row.difficulty !== DIFFICULTIES.EASY)
+      : rows;
+
+    if (availableRows.length === 0) {
+      alert('No cards available with current settings');
+      return;
+    }
+
     // Calculate weighted probabilities
-    const totalWeight = rows.reduce(
+    const totalWeight = availableRows.reduce(
       (sum, row) => sum + DIFFICULTY_WEIGHTS[row.difficulty || 'unreported'],
       0
     );
@@ -67,7 +91,7 @@ function PlayDeck() {
     let random = Math.random() * totalWeight;
     let selectedRow;
 
-    for (const row of rows) {
+    for (const row of availableRows) {
       random -= DIFFICULTY_WEIGHTS[row.difficulty || 'unreported'];
       if (random <= 0) {
         selectedRow = row;
@@ -130,6 +154,22 @@ function PlayDeck() {
     }
   };
 
+  const handleSkipEasyChange = async (event) => {
+    const newSkipEasy = event.target.checked;
+    setSkipEasy(newSkipEasy);
+
+    try {
+      await axios.put(`/decks/${deckId}/settings`, {
+        direction,
+        skip_easy: newSkipEasy,
+      });
+      pickNewRow(deck, rowsWithDifficulty, newSkipEasy);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      // Continue with local state even if save fails
+    }
+  };
+
   useEffect(() => {
     if (!currentRow) return;
 
@@ -175,18 +215,31 @@ function PlayDeck() {
       <Box
         sx={{
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: 2,
-          my: 1,
+          gap: 1,
         }}
       >
-        <Typography>{deck.headers[0]}</Typography>
-        <DirectionToggle
-          direction={direction}
-          onDirectionChange={handleDirectionChange}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography>{deck.headers[0]}</Typography>
+          <DirectionToggle
+            direction={direction}
+            onDirectionChange={handleDirectionChange}
+          />
+          <Typography>{deck.headers[1]}</Typography>
+        </Box>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={skipEasy}
+              onChange={handleSkipEasyChange}
+              color='primary'
+              size='small'
+            />
+          }
+          label={<Typography variant='body1'>Skip easy cards</Typography>}
         />
-        <Typography>{deck.headers[1]}</Typography>
       </Box>
 
       <Paper
