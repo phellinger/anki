@@ -1,6 +1,7 @@
 require('dotenv').config();
+const path = require('path');
 
-module.exports = {
+const config = {
   db: {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -15,4 +16,9 @@ module.exports = {
     port: parseInt(process.env.SERVER_PORT || '5193', 10),
     frontendUrl: process.env.FRONTEND_URL,
   },
+  paths: {
+    examples: path.join(__dirname, '..', 'examples'),
+  },
 };
+
+module.exports = config;

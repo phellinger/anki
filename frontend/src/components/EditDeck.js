@@ -4,6 +4,7 @@ import { TextField, Button } from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/shared.module.css';
 import { formatDeckContent, parseDeckContent } from '../utils/deckFormat';
+import UserInfo from './UserInfo';
 
 function EditDeck() {
   const { deckId } = useParams();
@@ -58,36 +59,39 @@ function EditDeck() {
 
   return (
     <div className={styles.pageContainer}>
-      <h1>Edit Deck</h1>
-      <div className={styles.formField}>
-        <TextField
-          value={deckName}
-          onChange={(e) => setDeckName(e.target.value)}
-          placeholder='Enter deck name'
-          required
-          fullWidth
-          size='small'
+      <div className={styles.mainContainer}>
+        <UserInfo />
+        <h1>Edit Deck</h1>
+        <div className={styles.formField}>
+          <TextField
+            value={deckName}
+            onChange={(e) => setDeckName(e.target.value)}
+            placeholder='Enter deck name'
+            required
+            fullWidth
+            size='small'
+          />
+        </div>
+        <textarea
+          value={deckContent}
+          onChange={(e) => setDeckContent(e.target.value)}
+          placeholder='Enter deck data here (dash-separated columns)'
+          rows={10}
+          cols={50}
+          className={styles.fullWidthTextarea}
         />
-      </div>
-      <textarea
-        value={deckContent}
-        onChange={(e) => setDeckContent(e.target.value)}
-        placeholder='Enter deck data here (dash-separated columns)'
-        rows={10}
-        cols={50}
-        className={styles.fullWidthTextarea}
-      />
-      <div className={styles.buttonGroup}>
-        <Button
-          variant='contained'
-          onClick={handleSave}
-          disabled={!deckName.trim()}
-        >
-          Save Changes
-        </Button>
-        <Button variant='outlined' onClick={() => navigate('/')}>
-          Cancel
-        </Button>
+        <div className={styles.buttonGroup}>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+            disabled={!deckName.trim()}
+          >
+            Save Changes
+          </Button>
+          <Button variant='outlined' onClick={() => navigate('/')}>
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -22,6 +22,8 @@ import styles from '../styles/shared.module.css';
 import DownloadIcon from '@mui/icons-material/Download';
 import ImportDeck from './ImportDeck';
 import UploadIcon from '@mui/icons-material/Upload';
+import { useUser } from '../contexts/UserContext';
+import UserInfo from './UserInfo';
 
 function DeckManager() {
   const navigate = useNavigate();
@@ -30,10 +32,19 @@ function DeckManager() {
   const [deckToDelete, setDeckToDelete] = useState(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [deckToExport, setDeckToExport] = useState(null);
+  const { user } = useUser();
+  const [defaultDeckCount, setDefaultDeckCount] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     fetchDecks();
   }, []);
+
+  useEffect(() => {
+    if (decks.length === 0) {
+      checkDefaultDecks();
+    }
+  }, [decks]);
 
   const fetchDecks = async () => {
     try {
@@ -41,6 +52,15 @@ function DeckManager() {
       setDecks(response.data);
     } catch (error) {
       console.error('Error fetching decks:', error);
+    }
+  };
+
+  const checkDefaultDecks = async () => {
+    try {
+      const response = await axios.get('/default-decks');
+      setDefaultDeckCount(response.data.count);
+    } catch (error) {
+      console.error('Error checking default decks:', error);
     }
   };
 
@@ -54,10 +74,16 @@ function DeckManager() {
       await axios.delete(`/decks/${deckToDelete.id}`);
       setDeleteDialogOpen(false);
       setDeckToDelete(null);
-      fetchDecks();
+      await fetchDecks();
     } catch (error) {
       console.error('Error deleting deck:', error);
-      alert('Failed to delete deck');
+      setDeleteDialogOpen(false);
+      setDeckToDelete(null);
+      setTimeout(() => {
+        alert(
+          'Note: The deck was deleted but there was an error refreshing the list. Please refresh the page.'
+        );
+      }, 100);
     }
   };
 
@@ -151,19 +177,60 @@ function DeckManager() {
     }
   };
 
+  const handleImportDefaultDecks = async () => {
+    if (
+      !window.confirm(
+        `Do you want to import ${defaultDeckCount} default decks?`
+      )
+    ) {
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const response = await axios.post('/import-default-decks');
+      await fetchDecks();
+      alert(
+        `Successfully imported ${response.data.successful.length} decks${
+          response.data.failedCount > 0
+            ? ` (${response.data.failedCount} failed)`
+            : ''
+        }`
+      );
+    } catch (error) {
+      console.error('Error importing default decks:', error);
+      alert('Error importing default decks');
+    } finally {
+      setIsImporting(false);
+      setDefaultDeckCount(null);
+    }
+  };
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.mainContainer}>
+        <UserInfo />
+        <Typography
+          variant='h4'
+          component='h1'
+          sx={{
+            textAlign: 'center',
+            mb: 3,
+            mt: 2,
+          }}
+        >
+          Welcome {user?.username}!
+        </Typography>
+
         <List
           sx={{
             width: '100%',
             padding: 0,
             mt: 3,
             '& .MuiListItem-root': {
-              borderBottom: 'none', // Remove all ListItem borders
+              borderBottom: 'none',
             },
             '& .MuiDivider-root': {
-              // Remove any dividers
               display: 'none',
             },
           }}
@@ -203,51 +270,72 @@ function DeckManager() {
             </div>
           </ListItem>
 
-          {decks.map((deck) => (
-            <ListItem
-              key={deck.id}
-              sx={{
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'center' },
-                gap: { xs: 1, sm: 0 },
-                borderBottom: 'none',
-              }}
-            >
-              <ListItemText primary={deck.name} sx={{ mb: { xs: 1, sm: 0 } }} />
-              <div className={styles.actionButtons}>
-                <IconButton
-                  onClick={() => navigate(`/play/${deck.id}`)}
-                  sx={{ color: 'success.main' }}
-                >
-                  <PlayArrowIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => navigate(`/statistics/${deck.id}`)}
-                  sx={{ color: 'primary.main' }}
-                >
-                  <BarChartIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => navigate(`/edit/${deck.id}`)}
-                  sx={{ color: 'warning.main' }}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => handleExportClick(deck)}
-                  sx={{ color: 'info.main' }}
-                >
-                  <DownloadIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => handleDeleteClick(deck)}
-                  color='error'
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </div>
+          {decks.length === 0 ? (
+            <ListItem>
+              <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
+                {isImporting ? (
+                  <Typography color='text.secondary'>
+                    Importing decks...
+                  </Typography>
+                ) : defaultDeckCount ? (
+                  <Button onClick={handleImportDefaultDecks} color='primary'>
+                    Import {defaultDeckCount} default decks
+                  </Button>
+                ) : (
+                  <Typography color='text.secondary'>No decks yet</Typography>
+                )}
+              </Box>
             </ListItem>
-          ))}
+          ) : (
+            decks.map((deck) => (
+              <ListItem
+                key={deck.id}
+                sx={{
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'stretch', sm: 'center' },
+                  gap: { xs: 1, sm: 0 },
+                  borderBottom: 'none',
+                }}
+              >
+                <ListItemText
+                  primary={deck.name}
+                  sx={{ mb: { xs: 1, sm: 0 } }}
+                />
+                <div className={styles.actionButtons}>
+                  <IconButton
+                    onClick={() => navigate(`/play/${deck.id}`)}
+                    sx={{ color: 'success.main' }}
+                  >
+                    <PlayArrowIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => navigate(`/statistics/${deck.id}`)}
+                    sx={{ color: 'primary.main' }}
+                  >
+                    <BarChartIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => navigate(`/edit/${deck.id}`)}
+                    sx={{ color: 'warning.main' }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleExportClick(deck)}
+                    sx={{ color: 'info.main' }}
+                  >
+                    <DownloadIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleDeleteClick(deck)}
+                    color='error'
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </div>
+              </ListItem>
+            ))
+          )}
         </List>
 
         <DeleteDeck

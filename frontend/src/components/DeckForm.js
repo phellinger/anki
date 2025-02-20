@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../services/api.js';
 import { TextField, Button } from '@mui/material';
 import styles from '../styles/shared.module.css';
+import UserInfo from './UserInfo';
 
 function DeckForm() {
   const navigate = useNavigate();
@@ -49,36 +50,39 @@ function DeckForm() {
 
   return (
     <div className={styles.pageContainer}>
-      <h1>Create New Deck</h1>
-      <div className={styles.formField}>
-        <TextField
-          value={deckName}
-          onChange={(e) => setDeckName(e.target.value)}
-          placeholder='Enter deck name'
-          required
-          fullWidth
-          size='small'
+      <div className={styles.mainContainer}>
+        <UserInfo />
+        <h1>Create New Deck</h1>
+        <div className={styles.formField}>
+          <TextField
+            value={deckName}
+            onChange={(e) => setDeckName(e.target.value)}
+            placeholder='Enter deck name'
+            required
+            fullWidth
+            size='small'
+          />
+        </div>
+        <textarea
+          value={newDeckText}
+          onChange={(e) => setNewDeckText(e.target.value)}
+          placeholder='Enter deck data here (dash-separated columns)'
+          rows={10}
+          cols={50}
+          className={styles.fullWidthTextarea}
         />
-      </div>
-      <textarea
-        value={newDeckText}
-        onChange={(e) => setNewDeckText(e.target.value)}
-        placeholder='Enter deck data here (dash-separated columns)'
-        rows={10}
-        cols={50}
-        className={styles.fullWidthTextarea}
-      />
-      <div className={styles.buttonGroup}>
-        <Button
-          variant='contained'
-          onClick={handleAddDeck}
-          disabled={!deckName.trim()}
-        >
-          Add Deck
-        </Button>
-        <Button variant='outlined' onClick={() => navigate('/')}>
-          Cancel
-        </Button>
+        <div className={styles.buttonGroup}>
+          <Button
+            variant='contained'
+            onClick={handleAddDeck}
+            disabled={!deckName.trim()}
+          >
+            Add Deck
+          </Button>
+          <Button variant='outlined' onClick={() => navigate('/')}>
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );

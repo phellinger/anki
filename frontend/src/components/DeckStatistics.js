@@ -5,6 +5,7 @@ import axios from '../services/api.js';
 import styles from '../styles/card.module.css';
 import sharedStyles from '../styles/shared.module.css';
 import { DIFFICULTY_COLORS, DIFFICULTY_ORDER } from '../constants/difficulties';
+import UserInfo from './UserInfo';
 
 function DeckStatistics() {
   const { deckId } = useParams();
@@ -70,6 +71,7 @@ function DeckStatistics() {
 
   return (
     <div className={styles.cardContainer}>
+      <UserInfo />
       <Typography
         variant='h5'
         component='h1'

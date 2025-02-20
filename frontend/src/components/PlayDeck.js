@@ -17,6 +17,7 @@ import {
   DIFFICULTY_WEIGHTS,
   DIFFICULTY_COLORS_MUI,
 } from '../constants/difficulties';
+import UserInfo from './UserInfo';
 
 function PlayDeck() {
   const { deckId } = useParams();
@@ -200,6 +201,7 @@ function PlayDeck() {
 
   return (
     <Box className={styles.cardContainer}>
+      <UserInfo />
       <Typography
         variant='h5'
         component='h1'

@@ -25,11 +25,11 @@ sudo certbot certonly --standalone \
 sudo mkdir -p /etc/letsencrypt/live/${FRONTEND_DOMAIN}
 sudo mkdir -p /etc/letsencrypt/live/${API_DOMAIN}
 
-# Stop any running containers
-docker-compose -f docker-compose.prod.yml down
-
 # Export variables for docker-compose
 export $(cat .env.prod | grep -v '^#' | xargs)
+
+# Stop any running containers
+docker-compose -f docker-compose.prod.yml down
 
 # Build and start containers
 docker-compose -f docker-compose.prod.yml up -d --build 
