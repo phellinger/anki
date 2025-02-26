@@ -1,13 +1,13 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const config = require('./config');
+const { createPool } = require('./db');
 const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = config.server.port || 5193;
+const PORT = config.server.port;
 
 // Middleware
 app.use(
@@ -18,11 +18,10 @@ app.use(
 );
 app.use(bodyParser.json());
 
-// Create MySQL connection pool
-const pool = mysql.createPool(config.db);
+let pool; // Declare pool in wider scope
 
 // Create tables if they don't exist
-async function initializeDatabase() {
+async function initializeDatabase(pool) {
   try {
     // Create users table
     await pool.query(`
@@ -109,7 +108,26 @@ async function initializeDatabase() {
   }
 }
 
-initializeDatabase();
+// Start server only after database is ready
+async function startServer() {
+  try {
+    // Create database pool with retries
+    pool = await createPool(); // Assign to the outer pool variable
+
+    // Initialize database
+    await initializeDatabase(pool);
+
+    // Start listening only after database is ready
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://0.0.0.0:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
@@ -436,8 +454,4 @@ app.use((err, req, res, next) => {
 // Handle 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

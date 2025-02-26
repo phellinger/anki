@@ -28,6 +28,7 @@ import UserInfo from './UserInfo';
 function DeckManager() {
   const navigate = useNavigate();
   const [decks, setDecks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deckToDelete, setDeckToDelete] = useState(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -40,18 +41,18 @@ function DeckManager() {
     fetchDecks();
   }, []);
 
-  useEffect(() => {
-    if (decks.length === 0) {
-      checkDefaultDecks();
-    }
-  }, [decks]);
-
   const fetchDecks = async () => {
     try {
+      setIsLoading(true);
       const response = await axios.get('/decks');
       setDecks(response.data);
+      if (response.data.length === 0) {
+        checkDefaultDecks();
+      }
     } catch (error) {
       console.error('Error fetching decks:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -270,7 +271,13 @@ function DeckManager() {
             </div>
           </ListItem>
 
-          {decks.length === 0 ? (
+          {isLoading ? (
+            <ListItem>
+              <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
+                <Typography color='text.secondary'>Loading decks...</Typography>
+              </Box>
+            </ListItem>
+          ) : decks.length === 0 ? (
             <ListItem>
               <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
                 {isImporting ? (

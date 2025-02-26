@@ -14,9 +14,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --production
 
-# Copy source files and examples
+# Copy source files needed for build
 COPY src/ ./src/
-COPY examples/ ./examples/
 
 # Add environment configuration
 ARG NODE_ENV=production
