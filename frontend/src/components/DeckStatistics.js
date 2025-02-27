@@ -84,7 +84,20 @@ function DeckStatistics() {
         {deck.name}
       </Typography>
 
-      <Paper elevation={3} className={styles.statisticsCard}>
+      <Paper
+        elevation={3}
+        className={styles.statisticsCard}
+        sx={{
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          width: '100%',
+          p: 3,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-around',
+        }}
+      >
         {DIFFICULTY_ORDER.map((difficulty) => (
           <Box key={difficulty} className={styles.statisticsBar}>
             <Box

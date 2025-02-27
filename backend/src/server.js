@@ -28,7 +28,8 @@ async function initializeDatabase(pool) {
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        theme VARCHAR(10) DEFAULT 'light'
       );
     `);
 
@@ -159,9 +160,33 @@ const getDefaultUser = async (req, res, next) => {
 // Apply middleware to all routes
 app.use(getDefaultUser);
 
-// Get user info
-app.get('/user', (req, res) => {
-  res.json({ username: 'AnkiStudent' });
+// Get user info with theme
+app.get('/user', async (req, res) => {
+  try {
+    const [users] = await pool.query(
+      'SELECT username, theme FROM users WHERE id = ?',
+      [req.userId]
+    );
+    res.json({ username: users[0].username, theme: users[0].theme || 'light' });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Update user theme
+app.put('/user/theme', async (req, res) => {
+  try {
+    const { theme } = req.body;
+    await pool.query('UPDATE users SET theme = ? WHERE id = ?', [
+      theme,
+      req.userId,
+    ]);
+    res.json({ message: 'Theme updated successfully' });
+  } catch (error) {
+    console.error('Error updating theme:', error);
+    res.status(500).send('Error updating theme');
+  }
 });
 
 // Create a new deck

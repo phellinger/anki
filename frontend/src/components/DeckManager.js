@@ -6,7 +6,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Box,
   Typography,
@@ -24,6 +23,7 @@ import ImportDeck from './ImportDeck';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useUser } from '../contexts/UserContext';
 import UserInfo from './UserInfo';
+import PageContainer from './common/PageContainer';
 
 function DeckManager() {
   const navigate = useNavigate();
@@ -208,164 +208,159 @@ function DeckManager() {
   };
 
   return (
-    <div className={styles.pageContainer}>
-      <div className={styles.mainContainer}>
-        <UserInfo />
-        <Typography
-          variant='h4'
-          component='h1'
-          sx={{
-            textAlign: 'center',
-            mb: 3,
-            mt: 2,
-          }}
-        >
-          Welcome {user?.username}!
-        </Typography>
+    <PageContainer>
+      <UserInfo />
+      <Typography
+        variant='h4'
+        component='h1'
+        sx={{
+          textAlign: 'center',
+          mb: 3,
+          mt: 2,
+        }}
+      >
+        Welcome {user?.username}!
+      </Typography>
 
-        <List
+      <List
+        sx={{
+          width: '100%',
+          padding: 0,
+          mt: 3,
+          '& .MuiListItem-root': {
+            borderBottom: 'none',
+          },
+          '& .MuiDivider-root': {
+            display: 'none',
+          },
+        }}
+      >
+        <ListItem
           sx={{
-            width: '100%',
-            padding: 0,
-            mt: 3,
-            '& .MuiListItem-root': {
-              borderBottom: 'none',
-            },
-            '& .MuiDivider-root': {
-              display: 'none',
-            },
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: { xs: 1, sm: 0 },
+            borderBottom: 'none',
           }}
         >
-          <ListItem
+          <Typography
+            variant='h4'
+            component='h1'
             sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' },
-              justifyContent: 'space-between',
-              gap: { xs: 1, sm: 0 },
-              borderBottom: 'none',
+              margin: 0,
+              paddingTop: '4px',
+              mb: { xs: 1, sm: 0 },
+              fontWeight: 'bold',
+              fontSize: { xs: '1.5rem', sm: '2rem' },
             }}
           >
-            <Typography
-              variant='h4'
-              component='h1'
+            Your&nbsp;Decks
+          </Typography>
+          <div className={styles.buttonGroup}>
+            <Button
+              variant='contained'
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/new')}
+            >
+              New Deck
+            </Button>
+            <ImportDeck onImport={handleImport} />
+          </div>
+        </ListItem>
+
+        {isLoading ? (
+          <ListItem>
+            <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
+              <Typography color='text.secondary'>Loading decks...</Typography>
+            </Box>
+          </ListItem>
+        ) : decks.length === 0 ? (
+          <ListItem>
+            <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
+              {isImporting ? (
+                <Typography color='text.secondary'>
+                  Importing decks...
+                </Typography>
+              ) : defaultDeckCount ? (
+                <Button onClick={handleImportDefaultDecks} color='primary'>
+                  Import {defaultDeckCount} default decks
+                </Button>
+              ) : (
+                <Typography color='text.secondary'>No decks yet</Typography>
+              )}
+            </Box>
+          </ListItem>
+        ) : (
+          decks.map((deck) => (
+            <ListItem
+              key={deck.id}
               sx={{
-                margin: 0,
-                paddingTop: '4px',
-                mb: { xs: 1, sm: 0 },
-                fontWeight: 'bold',
-                fontSize: { xs: '1.5rem', sm: '2rem' },
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: { xs: 1, sm: 0 },
+                borderBottom: 'none',
               }}
             >
-              Your&nbsp;Decks
-            </Typography>
-            <div className={styles.buttonGroup}>
-              <Button
-                variant='contained'
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/new')}
-              >
-                New Deck
-              </Button>
-              <ImportDeck onImport={handleImport} />
-            </div>
-          </ListItem>
-
-          {isLoading ? (
-            <ListItem>
-              <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
-                <Typography color='text.secondary'>Loading decks...</Typography>
-              </Box>
+              <ListItemText primary={deck.name} sx={{ mb: { xs: 1, sm: 0 } }} />
+              <div className={styles.actionButtons}>
+                <IconButton
+                  onClick={() => navigate(`/play/${deck.id}`)}
+                  sx={{ color: 'success.main' }}
+                >
+                  <PlayArrowIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => navigate(`/statistics/${deck.id}`)}
+                  sx={{ color: 'primary.main' }}
+                >
+                  <BarChartIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => navigate(`/edit/${deck.id}`)}
+                  sx={{ color: 'warning.main' }}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handleExportClick(deck)}
+                  sx={{ color: 'info.main' }}
+                >
+                  <DownloadIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handleDeleteClick(deck)}
+                  color='error'
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </div>
             </ListItem>
-          ) : decks.length === 0 ? (
-            <ListItem>
-              <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
-                {isImporting ? (
-                  <Typography color='text.secondary'>
-                    Importing decks...
-                  </Typography>
-                ) : defaultDeckCount ? (
-                  <Button onClick={handleImportDefaultDecks} color='primary'>
-                    Import {defaultDeckCount} default decks
-                  </Button>
-                ) : (
-                  <Typography color='text.secondary'>No decks yet</Typography>
-                )}
-              </Box>
-            </ListItem>
-          ) : (
-            decks.map((deck) => (
-              <ListItem
-                key={deck.id}
-                sx={{
-                  flexDirection: { xs: 'column', sm: 'row' },
-                  alignItems: { xs: 'stretch', sm: 'center' },
-                  gap: { xs: 1, sm: 0 },
-                  borderBottom: 'none',
-                }}
-              >
-                <ListItemText
-                  primary={deck.name}
-                  sx={{ mb: { xs: 1, sm: 0 } }}
-                />
-                <div className={styles.actionButtons}>
-                  <IconButton
-                    onClick={() => navigate(`/play/${deck.id}`)}
-                    sx={{ color: 'success.main' }}
-                  >
-                    <PlayArrowIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => navigate(`/statistics/${deck.id}`)}
-                    sx={{ color: 'primary.main' }}
-                  >
-                    <BarChartIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => navigate(`/edit/${deck.id}`)}
-                    sx={{ color: 'warning.main' }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleExportClick(deck)}
-                    sx={{ color: 'info.main' }}
-                  >
-                    <DownloadIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleDeleteClick(deck)}
-                    color='error'
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </div>
-              </ListItem>
-            ))
-          )}
-        </List>
+          ))
+        )}
+      </List>
 
-        <DeleteDeck
-          open={deleteDialogOpen}
-          onClose={() => {
-            setDeleteDialogOpen(false);
-            setDeckToDelete(null);
-          }}
-          onConfirm={handleDeleteConfirm}
-          deckName={deckToDelete?.name}
-        />
+      <DeleteDeck
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeckToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        deckName={deckToDelete?.name}
+      />
 
-        <ExportDeck
-          open={exportDialogOpen}
-          onClose={() => {
-            setExportDialogOpen(false);
-            setDeckToExport(null);
-          }}
-          onExport={handleExport}
-          deckName={deckToExport?.name}
-        />
-      </div>
-    </div>
+      <ExportDeck
+        open={exportDialogOpen}
+        onClose={() => {
+          setExportDialogOpen(false);
+          setDeckToExport(null);
+        }}
+        onExport={handleExport}
+        deckName={deckToExport?.name}
+      />
+    </PageContainer>
   );
 }
 

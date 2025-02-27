@@ -25,7 +25,7 @@ function PlayDeck() {
   const [deck, setDeck] = useState(null);
   const [currentRow, setCurrentRow] = useState(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [isLeftSide, setIsLeftSide] = useState(true);
+  const [isLeftSide, setIsLeftSide] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [rowsWithDifficulty, setRowsWithDifficulty] = useState([]);
   const [direction, setDirection] = useState('both');
@@ -57,12 +57,40 @@ function PlayDeck() {
       setDeck(deckData);
       setRowsWithDifficulty(rowsWithDiff);
       setDirection(settings.direction);
-      setSkipEasy(settings.skip_easy);
+      setSkipEasy(!!settings.skip_easy);
+
+      // Remove the initial side setting and pickNewRow call from here
+      // Let pickNewRow handle everything
       pickNewRow(deckData, rowsWithDiff, settings.skip_easy);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching deck:', error);
       alert('Failed to load deck');
+    }
+  };
+
+  // Move side selection logic to a separate function
+  const determineCardSide = (selectedRow, currentDirection, headers) => {
+    // First check if one side is empty
+    const leftContent = selectedRow[headers[0]];
+    const rightContent = selectedRow[headers[1]];
+
+    if (!leftContent && rightContent) {
+      return false; // Show right side
+    }
+    if (!rightContent && leftContent) {
+      return true; // Show left side
+    }
+
+    // If both sides have content, use direction setting
+    switch (currentDirection) {
+      case 'leftToRight':
+        return true;
+      case 'rightToLeft':
+        return false;
+      case 'both':
+      default:
+        return Math.random() < 0.5;
     }
   };
 
@@ -100,20 +128,9 @@ function PlayDeck() {
       }
     }
 
+    // Set both the row and side in one update
     setCurrentRow(selectedRow);
-
-    // Determine which side to show based on content
-    const leftContent = selectedRow[deckData.headers[0]];
-    const rightContent = selectedRow[deckData.headers[1]];
-
-    if (!leftContent && rightContent) {
-      setIsLeftSide(false);
-    } else if (!rightContent && leftContent) {
-      setIsLeftSide(true);
-    } else {
-      setIsLeftSide(Math.random() < 0.5);
-    }
-
+    setIsLeftSide(determineCardSide(selectedRow, direction, deckData.headers));
     setShowAnswer(false);
   };
 
@@ -171,27 +188,19 @@ function PlayDeck() {
     }
   };
 
-  useEffect(() => {
-    if (!currentRow) return;
-
-    // Determine which side to show based on direction
-    switch (direction) {
-      case 'leftToRight':
-        setIsLeftSide(true);
-        break;
-      case 'rightToLeft':
-        setIsLeftSide(false);
-        break;
-      case 'both':
-        setIsLeftSide(Math.random() < 0.5);
-        break;
-      default:
-        setIsLeftSide(Math.random() < 0.5);
-    }
-  }, [currentRow, direction]);
-
-  if (isLoading || !currentRow) {
-    return <div>Loading...</div>;
+  if (isLoading || !deck || !currentRow || isLeftSide === null) {
+    return (
+      <Box
+        className={styles.cardContainer}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Typography>Loading...</Typography>
+      </Box>
+    );
   }
 
   const leftSideContent = deck.headers[0];
@@ -234,7 +243,7 @@ function PlayDeck() {
         <FormControlLabel
           control={
             <Checkbox
-              checked={skipEasy}
+              checked={!!skipEasy}
               onChange={handleSkipEasyChange}
               color='primary'
               size='small'
