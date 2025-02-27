@@ -1,20 +1,21 @@
-Tienda – Store
-Camiseta – T-shirt
-Zapatos – Shoes
-Pantalones – Pants
-Abrigo – Coat
-Vestido – Dress
-Cartera – Purse
-Sombrero – Hat
-Cinturón – Belt
-Joyería – Jewelry
-Cajero – Cashier
-Oferta – Sale
-Descuento – Discount
-Tamaño – Size
-Color – Color
-Devolver – To return
-Probarse – To try on
-Estilo – Style
-Cambio – Change
-Etiqueta de precio – Price tag
+spanish - english
+Tienda - Store
+Camiseta - T-shirt
+Zapatos - Shoes
+Pantalones - Pants
+Abrigo - Coat
+Vestido - Dress
+Cartera - Purse
+Sombrero - Hat
+Cinturón - Belt
+Joyería - Jewelry
+Cajero - Cashier
+Oferta - Sale
+Descuento - Discount
+Tamaño - Size
+Color - Color
+Devolver - To return
+Probarse - To try on
+Estilo - Style
+Cambio - Change
+Etiqueta de precio - Price tag
