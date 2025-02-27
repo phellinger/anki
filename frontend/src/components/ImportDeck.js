@@ -93,7 +93,7 @@ function ImportDeck({ onImport }) {
         onClick={handleClick}
         sx={{ ml: 1 }}
       >
-        Import Deck
+        Import&nbsp;Deck
       </Button>
     </>
   );

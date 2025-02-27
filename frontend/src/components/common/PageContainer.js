@@ -5,7 +5,7 @@ function PageContainer({ children }) {
   return (
     <Box
       sx={{
-        padding: { xs: '1rem', sm: '2rem' },
+        padding: { xs: '0.5rem', sm: '1rem' },
         maxWidth: '100%',
         boxSizing: 'border-box',
       }}
@@ -15,9 +15,10 @@ function PageContainer({ children }) {
         sx={{
           bgcolor: 'background.paper',
           color: 'text.primary',
-          p: 3,
+          p: { xs: 2, sm: 3 },
           borderRadius: 2,
           width: '100%',
+          mt: { xs: 3, sm: 3 },
         }}
       >
         {children}

@@ -226,9 +226,11 @@ function DeckManager() {
         sx={{
           width: '100%',
           padding: 0,
-          mt: 3,
+          mt: 2,
           '& .MuiListItem-root': {
             borderBottom: 'none',
+            py: { xs: 1, sm: 1.5 },
+            px: 0,
           },
           '& .MuiDivider-root': {
             display: 'none',
@@ -243,6 +245,7 @@ function DeckManager() {
             justifyContent: 'space-between',
             gap: { xs: 1, sm: 0 },
             borderBottom: 'none',
+            mb: 1,
           }}
         >
           <Typography
@@ -264,7 +267,7 @@ function DeckManager() {
               startIcon={<AddIcon />}
               onClick={() => navigate('/new')}
             >
-              New Deck
+              New&nbsp;Deck
             </Button>
             <ImportDeck onImport={handleImport} />
           </div>
@@ -299,11 +302,18 @@ function DeckManager() {
               sx={{
                 flexDirection: { xs: 'column', sm: 'row' },
                 alignItems: { xs: 'stretch', sm: 'center' },
-                gap: { xs: 1, sm: 0 },
+                gap: { xs: 1, sm: 2 },
                 borderBottom: 'none',
+                pr: { sm: 1 },
               }}
             >
-              <ListItemText primary={deck.name} sx={{ mb: { xs: 1, sm: 0 } }} />
+              <ListItemText
+                primary={deck.name}
+                sx={{
+                  mb: { xs: 1, sm: 0 },
+                  flex: 1,
+                }}
+              />
               <div className={styles.actionButtons}>
                 <IconButton
                   onClick={() => navigate(`/play/${deck.id}`)}

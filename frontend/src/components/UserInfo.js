@@ -18,6 +18,7 @@ function UserInfo() {
         display: 'flex',
         alignItems: 'center',
         gap: 2,
+        mb: 1,
       }}
     >
       <Typography variant='body2'>Logged in as {user?.username}</Typography>
