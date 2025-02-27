@@ -1,16 +1,13 @@
 import React from 'react';
-import { Paper } from '@mui/material';
+import { Paper, Box } from '@mui/material';
 
 function PageContainer({ children }) {
   return (
-    <div
-      style={{
-        padding: '1rem',
+    <Box
+      sx={{
+        padding: { xs: '1rem', sm: '2rem' },
         maxWidth: '100%',
         boxSizing: 'border-box',
-        '@media (min-width: 600px)': {
-          padding: '2rem',
-        },
       }}
     >
       <Paper
@@ -25,7 +22,7 @@ function PageContainer({ children }) {
       >
         {children}
       </Paper>
-    </div>
+    </Box>
   );
 }
 
