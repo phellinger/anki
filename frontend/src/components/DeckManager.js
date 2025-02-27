@@ -224,7 +224,7 @@ function DeckManager() {
           >
             Your&nbsp;Decks
           </Typography>
-          <div className={styles.buttonGroup}>
+          <Box sx={commonStyles.buttonGroup}>
             <Button
               variant='contained'
               startIcon={<AddIcon />}
@@ -233,7 +233,7 @@ function DeckManager() {
               New&nbsp;Deck
             </Button>
             <ImportDeck onImport={handleImport} />
-          </div>
+          </Box>
         </ListItem>
 
         {isLoading ? (
@@ -262,7 +262,7 @@ function DeckManager() {
           decks.map((deck) => (
             <ListItem key={deck.id} sx={commonStyles.listItem}>
               <ListItemText primary={deck.name} />
-              <div className={styles.actionButtons}>
+              <Box sx={commonStyles.actionButtons}>
                 <IconButton
                   onClick={() => navigate(`/play/${deck.id}`)}
                   sx={{ color: 'success.main' }}
@@ -293,7 +293,7 @@ function DeckManager() {
                 >
                   <DeleteIcon />
                 </IconButton>
-              </div>
+              </Box>
             </ListItem>
           ))
         )}

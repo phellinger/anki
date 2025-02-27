@@ -58,6 +58,7 @@ export const commonStyles = {
     gap: { xs: 1, sm: 2 },
     borderBottom: 'none',
     pr: { sm: 1 },
+    justifyContent: 'space-between',
   },
 
   // Common components
@@ -94,8 +95,9 @@ export const commonStyles = {
     display: 'flex',
     gap: 1,
     justifyContent: 'flex-end',
-    flexDirection: { xs: 'column', sm: 'row' },
+    flexDirection: 'row',
     width: { xs: '100%', sm: 'auto' },
+    ml: { sm: 'auto' },
   },
 
   actionButtons: {
@@ -103,6 +105,7 @@ export const commonStyles = {
     gap: 0.5,
     justifyContent: { xs: 'center', sm: 'flex-end' },
     width: { xs: '100%', sm: 'auto' },
+    flexWrap: 'wrap',
   },
 
   // Cards
