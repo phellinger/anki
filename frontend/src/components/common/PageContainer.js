@@ -1,26 +1,11 @@
 import React from 'react';
 import { Paper, Box } from '@mui/material';
+import { commonStyles } from '../../styles/muiStyles';
 
 function PageContainer({ children }) {
   return (
-    <Box
-      sx={{
-        padding: { xs: '0.5rem', sm: '1rem' },
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-      }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          p: { xs: 2, sm: 3 },
-          borderRadius: 2,
-          width: '100%',
-          mt: { xs: 3, sm: 3 },
-        }}
-      >
+    <Box sx={commonStyles.pageBox}>
+      <Paper elevation={3} sx={commonStyles.contentPaper}>
         {children}
       </Paper>
     </Box>

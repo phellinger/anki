@@ -24,6 +24,7 @@ import UploadIcon from '@mui/icons-material/Upload';
 import { useUser } from '../contexts/UserContext';
 import UserInfo from './UserInfo';
 import PageContainer from './common/PageContainer';
+import { commonStyles } from '../styles/muiStyles';
 
 function DeckManager() {
   const navigate = useNavigate();
@@ -210,54 +211,16 @@ function DeckManager() {
   return (
     <PageContainer>
       <UserInfo />
-      <Typography
-        variant='h4'
-        component='h1'
-        sx={{
-          textAlign: 'center',
-          mb: 3,
-          mt: 2,
-        }}
-      >
+      <Typography variant='h4' component='h1' sx={commonStyles.welcomeTitle}>
         Welcome {user?.username}!
       </Typography>
 
-      <List
-        sx={{
-          width: '100%',
-          padding: 0,
-          mt: 2,
-          '& .MuiListItem-root': {
-            borderBottom: 'none',
-            py: { xs: 1, sm: 1.5 },
-            px: 0,
-          },
-          '& .MuiDivider-root': {
-            display: 'none',
-          },
-        }}
-      >
-        <ListItem
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            justifyContent: 'space-between',
-            gap: { xs: 1, sm: 0 },
-            borderBottom: 'none',
-            mb: 1,
-          }}
-        >
+      <List sx={commonStyles.listContainer}>
+        <ListItem sx={commonStyles.listItem}>
           <Typography
             variant='h4'
             component='h1'
-            sx={{
-              margin: 0,
-              paddingTop: '4px',
-              mb: { xs: 1, sm: 0 },
-              fontWeight: 'bold',
-              fontSize: { xs: '1.5rem', sm: '2rem' },
-            }}
+            sx={commonStyles.sectionTitle}
           >
             Your&nbsp;Decks
           </Typography>
@@ -297,23 +260,8 @@ function DeckManager() {
           </ListItem>
         ) : (
           decks.map((deck) => (
-            <ListItem
-              key={deck.id}
-              sx={{
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'center' },
-                gap: { xs: 1, sm: 2 },
-                borderBottom: 'none',
-                pr: { sm: 1 },
-              }}
-            >
-              <ListItemText
-                primary={deck.name}
-                sx={{
-                  mb: { xs: 1, sm: 0 },
-                  flex: 1,
-                }}
-              />
+            <ListItem key={deck.id} sx={commonStyles.listItem}>
+              <ListItemText primary={deck.name} />
               <div className={styles.actionButtons}>
                 <IconButton
                   onClick={() => navigate(`/play/${deck.id}`)}
