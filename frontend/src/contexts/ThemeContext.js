@@ -6,7 +6,7 @@ import axios from '../services/api';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const [mode, setMode] = React.useState(user?.theme || 'light');
 
   useEffect(() => {
@@ -54,8 +54,17 @@ export function ThemeProvider({ children }) {
   const toggleTheme = async () => {
     const newMode = mode === 'light' ? 'dark' : 'light';
     setMode(newMode);
+
     try {
-      await axios.put('/user/theme', { theme: newMode });
+      await axios.put('/user/theme', {
+        theme: newMode,
+        username: user.username,
+      });
+      // Update user context
+      setUser((prev) => ({
+        ...prev,
+        theme: newMode,
+      }));
     } catch (error) {
       console.error('Error saving theme:', error);
     }

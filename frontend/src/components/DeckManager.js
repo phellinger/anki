@@ -9,6 +9,7 @@ import {
   IconButton,
   Box,
   Typography,
+  Link,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -212,7 +213,19 @@ function DeckManager() {
     <PageContainer>
       <UserInfo />
       <Typography variant='h4' component='h1' sx={commonStyles.welcomeTitle}>
-        Welcome {user?.username}!
+        {user?.isNew ? (
+          <>
+            Welcome {user?.username}!
+            <Typography variant='body2' sx={{ mt: 1 }}>
+              Your unique username has been generated.{' '}
+              <Link href='#' onClick={() => navigate('/register')}>
+                Register?
+              </Link>
+            </Typography>
+          </>
+        ) : (
+          `Welcome back ${user?.username}!`
+        )}
       </Typography>
 
       <List sx={commonStyles.listContainer}>

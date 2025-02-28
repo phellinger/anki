@@ -19,6 +19,7 @@ app.use(
 app.use(bodyParser.json());
 
 let pool; // Declare pool in wider scope
+const userCreationLocks = new Map();
 
 // Create tables if they don't exist
 async function initializeDatabase(pool) {
@@ -29,7 +30,9 @@ async function initializeDatabase(pool) {
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        theme VARCHAR(10) DEFAULT 'light'
+        theme VARCHAR(10) DEFAULT 'light',
+        ip_address VARCHAR(45) DEFAULT NULL,
+        INDEX idx_ip_address (ip_address)
       );
     `);
 
@@ -174,18 +177,21 @@ app.get('/user', async (req, res) => {
   }
 });
 
-// Update user theme
+// Update theme endpoint
 app.put('/user/theme', async (req, res) => {
   try {
-    const { theme } = req.body;
-    await pool.query('UPDATE users SET theme = ? WHERE id = ?', [
+    const { theme, username } = req.body;
+
+    // Update theme for user with this username
+    await pool.query('UPDATE users SET theme = ? WHERE username = ?', [
       theme,
-      req.userId,
+      username,
     ]);
+
     res.json({ message: 'Theme updated successfully' });
   } catch (error) {
     console.error('Error updating theme:', error);
-    res.status(500).send('Error updating theme');
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -467,6 +473,94 @@ app.post('/import-default-decks', async (req, res) => {
   } catch (error) {
     console.error('Error importing default decks:', error);
     res.status(500).send('Error importing default decks');
+  }
+});
+
+// User identification endpoint
+app.post('/user/identify', async (req, res) => {
+  const ipAddress = req.ip;
+
+  try {
+    console.log('User identification request from IP:', ipAddress);
+
+    // First try to find user by stored username
+    const { storedUsername } = req.body;
+    if (storedUsername) {
+      const [existingUser] = await pool.query(
+        'SELECT username, theme FROM users WHERE username = ?',
+        [storedUsername]
+      );
+      if (existingUser.length > 0) {
+        return res.json({
+          username: existingUser[0].username,
+          theme: existingUser[0].theme,
+          isNew: false,
+        });
+      }
+    }
+
+    // Then try to find by IP if no stored username or username not found
+    const [existingUserByIp] = await pool.query(
+      'SELECT username, theme FROM users WHERE ip_address = ?',
+      [ipAddress]
+    );
+
+    if (existingUserByIp.length > 0) {
+      return res.json({
+        username: existingUserByIp[0].username,
+        theme: existingUserByIp[0].theme,
+        isNew: false,
+      });
+    }
+
+    // If no user found, create new one
+    const { generateUsername } = require('./services/usernameGenerator');
+    let username;
+    let user = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    // First try up to 3 random combinations
+    while (!user && attempts < maxAttempts) {
+      try {
+        username = await generateUsername();
+        const [result] = await pool.query(
+          'INSERT INTO users (username, ip_address) VALUES (?, ?)',
+          [username, ipAddress]
+        );
+        user = { id: result.insertId, username };
+      } catch (error) {
+        if (error.code !== 'ER_DUP_ENTRY') {
+          throw error;
+        }
+      }
+      attempts++;
+    }
+
+    // If still no unique username, add numbers until we find one
+    if (!user) {
+      let counter = 1;
+      while (!user) {
+        try {
+          username = `${await generateUsername()}${counter}`;
+          const [result] = await pool.query(
+            'INSERT INTO users (username, ip_address) VALUES (?, ?)',
+            [username, ipAddress]
+          );
+          user = { id: result.insertId, username };
+        } catch (error) {
+          if (error.code !== 'ER_DUP_ENTRY') {
+            throw error;
+          }
+          counter++;
+        }
+      }
+    }
+
+    return res.json({ username: user.username, theme: 'light', isNew: true });
+  } catch (error) {
+    console.error('Error in user identification:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

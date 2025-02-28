@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({
+const instance = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   timeout: 5000,
   headers: {
@@ -8,4 +8,4 @@ const api = axios.create({
   },
 });
 
-export default api;
+export default instance;

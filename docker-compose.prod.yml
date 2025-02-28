@@ -32,15 +32,16 @@ services:
   mysql:
     image: mysql:5.7
     container_name: mysql-prod
-    expose:
-      - "3306"
+    platform: linux/x86_64
+    ports:
+      - "3351:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data_prod:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     command:
       - --default-authentication-plugin=mysql_native_password
@@ -50,7 +51,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}
+      test: ["CMD", "mysql", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -65,18 +66,18 @@ services:
       - "5193"
     volumes:
       - ./examples:/app/examples
+      - ./backend/resources:/app/src/resources
     env_file:
       - .env.prod
     depends_on:
-      mysql:
-        condition: service_healthy
-    restart: unless-stopped
+      - mysql
+    restart: on-failure:3
     networks:
       - app_network
     healthcheck:
-      test: wget --spider -q http://localhost:5193/health
-      interval: 10s
-      timeout: 5s
+      test: wget --spider -q http://localhost:5193/health || exit 1
+      interval: 30s
+      timeout: 10s
       retries: 5
       start_period: 40s
 
@@ -92,6 +93,9 @@ services:
     env_file:
       - .env.prod
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       - app_network
     healthcheck:
@@ -106,4 +110,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+  mysql_data_prod:
