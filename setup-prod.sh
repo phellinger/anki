@@ -29,13 +29,19 @@ sudo mkdir -p /etc/letsencrypt/live/${API_DOMAIN}
 export $(cat .env.prod | grep -v '^#' | xargs)
 
 # Stop any running containers
-docker-compose -f docker-compose.prod.yml stop backend frontend nginx mysql || true
-docker-compose -f docker-compose.prod.yml rm -f backend frontend nginx mysql || true
+docker-compose -f docker-compose.prod.yml stop || true
+docker-compose -f docker-compose.nginx-proxy.yml stop nginx-proxy || true
+
+docker-compose -f docker-compose.prod.yml rm -f || true
+docker-compose -f docker-compose.nginx-proxy.yml rm -f nginx-proxy || true
 
 # If first argument is "reset", remove the mysql volume
 if [ "$1" = "reset" ]; then
     docker volume rm anki_mysql_data_prod || true
 fi
 
-# Build and start containers
-docker-compose -f docker-compose.prod.yml up -d --build 
+# Start the nginx-proxy first
+docker-compose -f docker-compose.nginx-proxy.yml up -d --build
+
+# Build and start application containers
+docker-compose -f docker-compose.prod.yml up -d --build

@@ -8,6 +8,11 @@ import {
   Paper,
   FormControlLabel,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import axios from '../services/api.js';
 import styles from '../styles/card.module.css';
@@ -30,6 +35,7 @@ function PlayDeck() {
   const [rowsWithDifficulty, setRowsWithDifficulty] = useState([]);
   const [direction, setDirection] = useState('both');
   const [skipEasy, setSkipEasy] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     fetchDeckAndSettings();
@@ -107,6 +113,22 @@ function PlayDeck() {
       : rows;
 
     if (availableRows.length === 0) {
+      // Check if there are any cards at all
+      if (rows.length === 0) {
+        alert('No cards available in this deck');
+        navigate('/');
+        return;
+      }
+
+      // If we have cards but they're all marked as easy and we're skipping easy cards
+      if (
+        skipEasyCards &&
+        rows.some((row) => row.difficulty === DIFFICULTIES.EASY)
+      ) {
+        setOpenDialog(true);
+        return;
+      }
+
       alert('No cards available with current settings');
       return;
     }
@@ -188,7 +210,26 @@ function PlayDeck() {
     }
   };
 
-  if (isLoading || !deck || !currentRow || isLeftSide === null) {
+  const handleDisableSkipEasy = async () => {
+    setSkipEasy(false);
+    setOpenDialog(false);
+
+    try {
+      await axios.put(`/decks/${deckId}/settings`, {
+        direction,
+        skip_easy: false,
+      });
+      // Pick a new row with skip_easy set to false
+      pickNewRow(deck, rowsWithDifficulty, false);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      // Continue with local state even if save fails
+      pickNewRow(deck, rowsWithDifficulty, false);
+    }
+  };
+
+  // Modify the conditional rendering logic to handle the case when all cards are marked as easy
+  if (isLoading) {
     return (
       <Box
         className={styles.cardContainer}
@@ -199,6 +240,88 @@ function PlayDeck() {
         }}
       >
         <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  // Show the dialog directly if it's open, regardless of other conditions
+  if (openDialog) {
+    return (
+      <Box className={styles.cardContainer}>
+        <UserInfo />
+        <Typography
+          variant='h5'
+          component='h1'
+          sx={{
+            textAlign: 'center',
+            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+            fontWeight: 'bold',
+          }}
+        >
+          {deck.name}
+        </Typography>
+
+        <Dialog
+          open={openDialog}
+          onClose={() => navigate('/')}
+          aria-labelledby='alert-dialog-title'
+          aria-describedby='alert-dialog-description'
+        >
+          <DialogTitle id='alert-dialog-title'>
+            {'All cards are marked as easy'}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id='alert-dialog-description'>
+              All cards in this deck are marked as easy, and you have the "Skip
+              easy cards" option enabled. Would you like to disable the "Skip
+              easy cards" option to continue studying?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => navigate('/')} color='primary'>
+              Return to Decks
+            </Button>
+            <Button onClick={handleDisableSkipEasy} color='primary' autoFocus>
+              Disable "Skip easy cards"
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  }
+
+  // If we have a deck but no current row, it means we couldn't find any cards to show
+  if (!deck) {
+    return (
+      <Box
+        className={styles.cardContainer}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Typography>Error loading deck</Typography>
+      </Box>
+    );
+  }
+
+  if (!currentRow || isLeftSide === null) {
+    return (
+      <Box
+        className={styles.cardContainer}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        <Typography>No cards available with current settings</Typography>
+        <Button variant='contained' onClick={() => navigate('/')}>
+          Return to Decks
+        </Button>
       </Box>
     );
   }
