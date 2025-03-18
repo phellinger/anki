@@ -43,6 +43,15 @@ export function ThemeProvider({ children }) {
             styleOverrides: {
               root: {
                 backgroundColor: mode === 'dark' ? '#1e1e1e' : '#ffffff',
+                ...(mode === 'dark' && {
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  boxShadow:
+                    '0 0 10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                  '&:hover': {
+                    boxShadow:
+                      '0 0 15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                  },
+                }),
               },
             },
           },
