@@ -3,9 +3,9 @@ export
 
 .PHONY: update-prod
 update-prod:
-	ssh $(TARGET_HOST) "cd $(TARGET_DIR); sudo rm -rf nginx"
-	rsync -avP --delete --exclude .git --exclude .DS_Store ./ $(TARGET_HOST):${TARGET_DIR}/
-	ssh $(TARGET_HOST) "cd ${TARGET_DIR}; ./setup-prod.sh; docker ps"
+	ssh $(TARGET_HOST) "cd $(TARGET_PATH); sudo rm -rf nginx"
+	rsync -avP --delete --exclude .git --exclude .DS_Store ./ $(TARGET_HOST):${TARGET_PATH}/
+	ssh $(TARGET_HOST) "cd ${TARGET_PATH}; ./setup-prod.sh; docker ps"
 
 .PHONY: update-dev
 update-dev:
@@ -15,8 +15,8 @@ update-dev:
 # TODO: This is not working
 .PHONY: reset-prod
 reset-prod:
-	rsync -avP --delete --exclude .git --exclude .DS_Store ./ $(TARGET_HOST):${TARGET_DIR}/
-	ssh $(TARGET_HOST) "cd ${TARGET_DIR}; ./setup-prod.sh reset; docker ps"
+	rsync -avP --delete --exclude .git --exclude .DS_Store ./ $(TARGET_HOST):${TARGET_PATH}/
+	ssh $(TARGET_HOST) "cd ${TARGET_PATH}; ./setup-prod.sh reset; docker ps"
 
 .PHONY: reset-dev
 reset-dev:
