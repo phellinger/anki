@@ -79,7 +79,7 @@ services:
     labels:
       - "traefik.frontend.rule=Host:${FRONTEND_DOMAIN}"
       - "traefik.port=3123"
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy.custom_nginx_server_config=location = /favicon.ico { proxy_pass http://frontend:3123/favicon.ico; access_log off; log_not_found off; expires max; }"
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy.custom_nginx_server_config=location ~ ^/favicon\\.(ico|svg|png)$ { proxy_pass http://frontend:3123$request_uri; access_log off; log_not_found off; expires max; }"
     networks:
       - app_network
     healthcheck:
