@@ -14,6 +14,16 @@ if ! command -v certbot &> /dev/null; then
     sudo apt install -y certbot
 fi
 
+# Export variables for docker-compose
+export $(cat .env.prod | grep -v '^#' | xargs)
+
+# Stop any running containers first to free up port 80
+docker-compose -f docker-compose.prod.yml stop || true
+docker-compose -f docker-compose.nginx-proxy.yml stop nginx-proxy || true
+
+docker-compose -f docker-compose.prod.yml rm -f || true
+docker-compose -f docker-compose.nginx-proxy.yml rm -f nginx-proxy || true
+
 # Get SSL certificates if needed (using standalone mode)
 sudo certbot certonly --standalone \
     --keep-until-expiring \
@@ -24,16 +34,6 @@ sudo certbot certonly --standalone \
 # Create symbolic links to standardize certificate paths
 sudo mkdir -p /etc/letsencrypt/live/${FRONTEND_DOMAIN}
 sudo mkdir -p /etc/letsencrypt/live/${API_DOMAIN}
-
-# Export variables for docker-compose
-export $(cat .env.prod | grep -v '^#' | xargs)
-
-# Stop any running containers
-docker-compose -f docker-compose.prod.yml stop || true
-docker-compose -f docker-compose.nginx-proxy.yml stop nginx-proxy || true
-
-docker-compose -f docker-compose.prod.yml rm -f || true
-docker-compose -f docker-compose.nginx-proxy.yml rm -f nginx-proxy || true
 
 # If first argument is "reset", remove the mysql volume
 if [ "$1" = "reset" ]; then
