@@ -182,6 +182,54 @@ function PlayDeck() {
     setShowAnswer(true);
   };
 
+  // Keyboard shortcuts: 1=Easy, 2=Normal, 3=Challenging, 4=Hard (only when answer is shown)
+  useEffect(() => {
+    if (!showAnswer || openDialog || !currentRow) return;
+
+    const keyToDifficulty = {
+      '1': DIFFICULTIES.EASY,
+      '2': DIFFICULTIES.NORMAL,
+      '3': DIFFICULTIES.CHALLENGING,
+      '4': DIFFICULTIES.HARD,
+    };
+
+    const handleKeyDown = (event) => {
+      const key = event.key;
+      if (!(key in keyToDifficulty)) return;
+      // Don't trigger when typing in an input
+      const tag = event.target?.tagName?.toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+
+      event.preventDefault();
+      handleDifficultyClick(keyToDifficulty[key]);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAnswer, openDialog, currentRow]);
+
+  // Keyboard shortcut: Space = Show (when Show button is visible)
+  // Use capture phase so we handle Space before it reaches the "Skip easy cards" checkbox.
+  // If focus is on the checkbox (or its label), let Space toggle it; otherwise Space triggers Show.
+  useEffect(() => {
+    if (showAnswer || openDialog || !currentRow) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key !== ' ') return;
+      // Let Space toggle the checkbox when the user explicitly focused it
+      if (event.target.closest?.('[data-skip-easy-control]')) return;
+      const tag = event.target?.tagName?.toUpperCase();
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      handleShowClick();
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [showAnswer, openDialog, currentRow]);
+
   const handleDirectionChange = async (newDirection) => {
     setDirection(newDirection);
     setShowAnswer(false); // Reset card when direction changes
@@ -364,6 +412,7 @@ function PlayDeck() {
         </Box>
 
         <FormControlLabel
+          data-skip-easy-control
           control={
             <Checkbox
               checked={!!skipEasy}

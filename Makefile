@@ -3,8 +3,7 @@ export
 
 .PHONY: update-prod
 update-prod:
-	ssh $(TARGET_HOST) "cd $(TARGET_PATH); sudo rm -rf nginx"
-	rsync -avP --delete --exclude .git --exclude .DS_Store ./ $(TARGET_HOST):${TARGET_PATH}/
+	rsync -avP --delete --exclude .git --exclude .DS_Store --exclude nginx-proxy ./ $(TARGET_HOST):${TARGET_PATH}/
 	ssh $(TARGET_HOST) "cd ${TARGET_PATH}; ./setup-prod.sh; docker ps"
 
 .PHONY: update-dev
