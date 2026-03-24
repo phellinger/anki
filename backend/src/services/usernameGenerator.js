@@ -17,10 +17,14 @@ async function generateUsername() {
     return list[Math.floor(Math.random() * list.length)];
   }
 
+  function randomThreeDigits() {
+    return String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  }
+
   function generateName() {
     const sport = getRandomWord(sports);
     const animal = getRandomWord(animals);
-    return sport + animal;
+    return sport + animal + randomThreeDigits();
   }
 
   return generateName();
