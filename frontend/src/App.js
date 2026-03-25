@@ -10,6 +10,7 @@ import { UserProvider } from './contexts/UserContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CssBaseline } from '@mui/material';
 import Register from './components/Register';
+import SignIn from './components/SignIn';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
               <Route path='/play/:deckId' element={<PlayDeck />} />
               <Route path='/statistics/:deckId' element={<DeckStatistics />} />
               <Route path='/register' element={<Register />} />
+              <Route path='/sign-in' element={<SignIn />} />
             </Routes>
           </Container>
         </Router>

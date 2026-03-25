@@ -1,9 +1,9 @@
--- Create database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
-
--- Create user with proper escaping
-CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
-
--- Grant privileges
-GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${DB_USER}'@'%';
-FLUSH PRIVILEGES;
+-- This file is not mounted into the MySQL container.
+--
+-- The official mysql image creates the database and user from environment variables:
+--   MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+-- (see docker-compose *.yml). Do not put ${VAR} placeholders here: init scripts are
+-- executed as raw SQL, not shell — that caused ERROR 1064 near '{MYSQL_DATABASE}'.
+--
+-- If you need custom SQL on first boot, use a .sh script in docker-entrypoint-initdb.d
+-- that runs mysql with envsubst, or bake SQL with fixed names matching .env.

@@ -8,15 +8,42 @@ import { commonStyles } from '../styles/muiStyles';
 import { useNavigate } from 'react-router-dom';
 
 function UserInfo() {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const { mode, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
     <Box sx={commonStyles.userInfo}>
-      <Typography variant='body2'>
-        Logged in as {user?.username} |{' '}
-        <Link href='#' onClick={() => navigate('/register')}>
+      <Typography variant='body2' component='span' sx={{ lineHeight: 1.6 }}>
+        Logged in as {user?.username}
+        {' · '}
+        <Link
+          href='#'
+          onClick={(e) => {
+            e.preventDefault();
+            logout();
+          }}
+        >
+          Log out
+        </Link>
+        {' · '}
+        <Link
+          href='#'
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/sign-in');
+          }}
+        >
+          Sign in
+        </Link>
+        {' · '}
+        <Link
+          href='#'
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/register');
+          }}
+        >
           Register
         </Link>
       </Typography>

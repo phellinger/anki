@@ -14,7 +14,6 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     command: 
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
@@ -38,11 +37,16 @@ services:
       - "5193:5193"
     volumes:
       - ./backend:/app
+      # Keeps container node_modules when package.json changes: run `make backend-npm-install`
       - /app/node_modules
       - ./examples:/app/examples
       - ./backend/resources:/app/src/resources
     env_file:
       - .env.dev
+    environment:
+      # Compose interpolates ${FRONTEND_URL}; override when starting (e.g. host CRA on :3000):
+      #   FRONTEND_URL=http://localhost:3000 make dev-backend
+      FRONTEND_URL: ${FRONTEND_URL}
     depends_on:
       mysql:
         condition: service_healthy

@@ -185,21 +185,29 @@ Document token lifetimes and refresh in OpenAPI or this doc when implemented.
 
 ## 11. Implementation phases
 
-**Phase A — Foundation**
+**Phase A — Foundation** *(implemented)*
 
-- Session + `user_id` on deck routes; remove blanket **AnkiStudent** default
-- Username format: **3-digit suffix** in `generateUsername()` (done in code)
-- Bootstrap + `/user/me`
+- **`sessions` table** + nullable **`users.email`**; HTTP-only **`sid`** cookie (`backend/src/services/sessionService.js`)
+- **`requireSessionUser`** on deck and user routes except `GET /health` and `POST /user/identify`
+- **`POST /user/identify`:** valid session → same user; else **`storedUsername`** → session for that user; else **new anonymous user** + session (no IP-based identity)
+- **`GET /user`** and **`GET /user/me`:** `{ username, theme, isAnonymous }`; **`PUT /user/theme`** uses session only
+- **Decks:** `GET/PUT/DELETE /decks/:id` require ownership; difficulties/settings assert deck ownership
+- **Frontend:** `axios` **`withCredentials: true`**, default **`baseURL: ''`**; **`proxy`** in `frontend/package.json` for dev same-origin cookies. Cross-origin production deploys need matching CORS + credentials (and possibly `SameSite=None; Secure`)
 
-**Phase B — Registration OTP + complete**
+**Phase B — Registration OTP + complete** *(implemented)*
 
-- `register/otp/*` + `register/complete` with **username** defaulting to current
-- Wire Register UI (minimal steps)
+- Endpoints: `POST /auth/register/otp/request`, `otp/verify`, `complete`
+- **Email:** configure `SMTP_*` and `MAIL_FROM` (see `.env.prod.template`). If `SMTP_HOST` is unset, the backend **logs** the message (and OTP) to the console instead of sending mail.
+- Set **`OTP_PEPPER`** in production (used to hash codes in the DB).
+- Register UI: email → 4-digit code → username (default: current) + optional password
 
-**Phase C — Sign in**
+**Phase C — Sign in** *(implemented)*
 
-- Identifier (email or username) + login OTP + password path
-- **Token response shape** for mobile (optional in same phase or Phase D)
+- `POST /auth/login/otp/request` — `{ identifier }` (email or username)
+- `POST /auth/login/otp/verify` — `{ identifier, code }` — new session cookie
+- `POST /auth/login/password` — `{ identifier, password }` if user set a password at registration
+- UI: `/sign-in` (header: **Log out · Sign in · Register**)
+- **Token response** for mobile remains Phase D
 
 **Phase D — Mobile**
 

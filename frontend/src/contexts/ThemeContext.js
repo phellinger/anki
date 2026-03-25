@@ -67,7 +67,6 @@ export function ThemeProvider({ children }) {
     try {
       await axios.put('/user/theme', {
         theme: newMode,
-        username: user.username,
       });
       // Update user context
       setUser((prev) => ({

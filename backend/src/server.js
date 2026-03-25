@@ -1,10 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 const config = require('./config');
 const { createPool } = require('./db');
 const fs = require('fs').promises;
 const path = require('path');
+const sessionService = require('./services/sessionService');
+const mail = require('./services/mail');
+const otpUtil = require('./services/otp');
 
 const app = express();
 const PORT = config.server.port;
@@ -17,9 +22,64 @@ app.use(
   })
 );
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 let pool; // Declare pool in wider scope
 const userCreationLocks = new Map();
+
+async function requireSessionUser(req, res, next) {
+  try {
+    const sessionId = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const userId = await sessionService.findUserIdForSession(pool, sessionId);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    req.userId = userId;
+    req.sessionId = sessionId;
+    await sessionService.touchSession(pool, sessionId);
+    next();
+  } catch (error) {
+    console.error('Session middleware:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function deckOwnedByUser(deckId, userId) {
+  const [rows] = await pool.query(
+    'SELECT id FROM decks WHERE id = ? AND user_id = ?',
+    [deckId, userId]
+  );
+  return rows.length > 0;
+}
+
+function normalizeEmail(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
+
+const REGISTER_OTP_COOLDOWN_MS = 60 * 1000;
+const registerOtpLastSent = new Map();
+const LOGIN_OTP_COOLDOWN_MS = 60 * 1000;
+const loginOtpLastSent = new Map();
+
+async function findUserByLoginIdentifier(identifier) {
+  const raw = String(identifier || '').trim();
+  if (!raw) return null;
+  if (raw.includes('@')) {
+    const email = normalizeEmail(raw);
+    const [rows] = await pool.query(
+      'SELECT id, username, theme, email, email_verified_at, password_hash FROM users WHERE email = ?',
+      [email]
+    );
+    return rows[0] || null;
+  }
+  const [rows] = await pool.query(
+    'SELECT id, username, theme, email, email_verified_at, password_hash FROM users WHERE username = ?',
+    [raw]
+  );
+  return rows[0] || null;
+}
 
 // Create tables if they don't exist
 async function initializeDatabase(pool) {
@@ -78,6 +138,63 @@ async function initializeDatabase(pool) {
         PRIMARY KEY (deck_id, user_id),
         FOREIGN KEY (deck_id) REFERENCES decks(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id VARCHAR(64) PRIMARY KEY,
+        user_id INT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_sessions_user_id (user_id),
+        INDEX idx_sessions_expires_at (expires_at)
+      );
+    `);
+
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN email VARCHAR(255) NULL');
+    } catch (e) {
+      if (e.errno !== 1060) throw e;
+    }
+
+    try {
+      await pool.query(
+        'ALTER TABLE users ADD COLUMN password_hash VARCHAR(255) NULL'
+      );
+    } catch (e) {
+      if (e.errno !== 1060) throw e;
+    }
+
+    try {
+      await pool.query(
+        'ALTER TABLE users ADD COLUMN email_verified_at DATETIME NULL'
+      );
+    } catch (e) {
+      if (e.errno !== 1060) throw e;
+    }
+
+    try {
+      await pool.query(
+        'CREATE UNIQUE INDEX uq_users_email ON users (email)'
+      );
+    } catch (e) {
+      if (e.errno !== 1061) throw e;
+    }
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_otps (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        user_id INT NOT NULL,
+        purpose VARCHAR(32) NOT NULL,
+        code_hash VARCHAR(64) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        consumed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_otp_lookup (email, user_id, purpose),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `);
 
@@ -145,32 +262,36 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Get default user middleware
-const getDefaultUser = async (req, res, next) => {
+// Get user info with theme (session required)
+app.get('/user', requireSessionUser, async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id FROM users WHERE username = ?',
-      ['AnkiStudent']
-    );
-    req.userId = users[0].id;
-    next();
-  } catch (error) {
-    console.error('Error getting default user:', error);
-    res.status(500).send('Server error');
-  }
-};
-
-// Apply middleware to all routes
-app.use(getDefaultUser);
-
-// Get user info with theme
-app.get('/user', async (req, res) => {
-  try {
-    const [users] = await pool.query(
-      'SELECT username, theme FROM users WHERE id = ?',
+      'SELECT username, theme, email, email_verified_at FROM users WHERE id = ?',
       [req.userId]
     );
-    res.json({ username: users[0].username, theme: users[0].theme || 'light' });
+    res.json({
+      username: users[0].username,
+      theme: users[0].theme || 'light',
+      isAnonymous: !users[0].email || !users[0].email_verified_at,
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Same profile shape as GET /user (alias for auth plan)
+app.get('/user/me', requireSessionUser, async (req, res) => {
+  try {
+    const [users] = await pool.query(
+      'SELECT username, theme, email, email_verified_at FROM users WHERE id = ?',
+      [req.userId]
+    );
+    res.json({
+      username: users[0].username,
+      theme: users[0].theme || 'light',
+      isAnonymous: !users[0].email || !users[0].email_verified_at,
+    });
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).send('Server error');
@@ -178,14 +299,13 @@ app.get('/user', async (req, res) => {
 });
 
 // Update theme endpoint
-app.put('/user/theme', async (req, res) => {
+app.put('/user/theme', requireSessionUser, async (req, res) => {
   try {
-    const { theme, username } = req.body;
+    const { theme } = req.body;
 
-    // Update theme for user with this username
-    await pool.query('UPDATE users SET theme = ? WHERE username = ?', [
+    await pool.query('UPDATE users SET theme = ? WHERE id = ?', [
       theme,
-      username,
+      req.userId,
     ]);
 
     res.json({ message: 'Theme updated successfully' });
@@ -195,8 +315,326 @@ app.put('/user/theme', async (req, res) => {
   }
 });
 
+// End session (clears cookie; client should reload so /user/identify creates a new anonymous user)
+app.post('/auth/logout', async (req, res) => {
+  try {
+    const sessionId = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    if (sessionId) {
+      await sessionService.destroySession(pool, sessionId);
+    }
+    sessionService.clearSessionCookie(res);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Logout:', error);
+    sessionService.clearSessionCookie(res);
+    res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
+// --- Sign in (email/username + OTP or password) ---
+
+app.post('/auth/login/otp/request', async (req, res) => {
+  try {
+    const identifier = req.body?.identifier;
+    const user = await findUserByLoginIdentifier(identifier);
+    if (!user || !user.email_verified_at) {
+      return res.status(400).json({
+        error:
+          'No verified account found for that email or username. Register first or check spelling.',
+      });
+    }
+
+    const last = loginOtpLastSent.get(user.email);
+    if (last && Date.now() - last < LOGIN_OTP_COOLDOWN_MS) {
+      return res.status(429).json({
+        error: 'Please wait a minute before requesting another code',
+      });
+    }
+
+    const code = otpUtil.randomDigits4();
+    const codeHash = otpUtil.hashCode(code);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query(
+      'DELETE FROM email_otps WHERE email = ? AND user_id = ? AND purpose = ?',
+      [user.email, user.id, 'login']
+    );
+
+    await pool.query(
+      `INSERT INTO email_otps (email, user_id, purpose, code_hash, expires_at)
+       VALUES (?, ?, 'login', ?, ?)`,
+      [user.email, user.id, codeHash, expiresAt]
+    );
+
+    loginOtpLastSent.set(user.email, Date.now());
+
+    await mail.sendMail({
+      to: user.email,
+      subject: 'Your Anki Free sign-in code',
+      text: `Your sign-in code is: ${code}\n\nIt expires in 10 minutes. If you did not request this, ignore this email.`,
+    });
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('login otp request:', error);
+    res.status(500).json({ error: 'Could not send sign-in email' });
+  }
+});
+
+app.post('/auth/login/otp/verify', async (req, res) => {
+  try {
+    const identifier = req.body?.identifier;
+    const code = String(req.body?.code || '').trim();
+    if (!identifier || !/^\d{4}$/.test(code)) {
+      return res.status(400).json({ error: 'Enter the 4-digit code' });
+    }
+
+    const user = await findUserByLoginIdentifier(identifier);
+    if (!user || !user.email_verified_at) {
+      return res.status(400).json({ error: 'Invalid code or account' });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT id FROM email_otps WHERE email = ? AND user_id = ? AND purpose = 'login'
+       AND consumed_at IS NULL AND expires_at > NOW() AND code_hash = ?`,
+      [user.email, user.id, otpUtil.hashCode(code)]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({ error: 'Invalid or expired code' });
+    }
+
+    await pool.query('UPDATE email_otps SET consumed_at = NOW() WHERE id = ?', [
+      rows[0].id,
+    ]);
+
+    const oldSid = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    if (oldSid) {
+      await sessionService.destroySession(pool, oldSid);
+    }
+
+    const { sessionId: newSid } = await sessionService.createSession(
+      pool,
+      user.id
+    );
+    sessionService.setSessionCookie(res, newSid);
+
+    res.json({
+      username: user.username,
+      theme: user.theme || 'light',
+      isAnonymous: false,
+    });
+  } catch (error) {
+    console.error('login otp verify:', error);
+    res.status(500).json({ error: 'Sign-in failed' });
+  }
+});
+
+app.post('/auth/login/password', async (req, res) => {
+  try {
+    const identifier = req.body?.identifier;
+    const password = req.body?.password;
+    if (!identifier || password == null || String(password).length === 0) {
+      return res.status(400).json({ error: 'Password required' });
+    }
+
+    const user = await findUserByLoginIdentifier(identifier);
+    if (!user || !user.password_hash) {
+      return res.status(400).json({
+        error:
+          'Invalid email/username or password. If you never set a password, use email code instead.',
+      });
+    }
+
+    const match = await bcrypt.compare(String(password), user.password_hash);
+    if (!match) {
+      return res.status(400).json({ error: 'Invalid email/username or password' });
+    }
+
+    const oldSid = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    if (oldSid) {
+      await sessionService.destroySession(pool, oldSid);
+    }
+
+    const { sessionId: newSid } = await sessionService.createSession(
+      pool,
+      user.id
+    );
+    sessionService.setSessionCookie(res, newSid);
+
+    res.json({
+      username: user.username,
+      theme: user.theme || 'light',
+      isAnonymous: false,
+    });
+  } catch (error) {
+    console.error('login password:', error);
+    res.status(500).json({ error: 'Sign-in failed' });
+  }
+});
+
+// --- Registration (Phase B): email OTP + username / optional password ---
+
+app.post('/auth/register/otp/request', requireSessionUser, async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
+
+    const last = registerOtpLastSent.get(email);
+    if (last && Date.now() - last < REGISTER_OTP_COOLDOWN_MS) {
+      return res.status(429).json({
+        error: 'Please wait a minute before requesting another code',
+      });
+    }
+
+    const [taken] = await pool.query(
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [email, req.userId]
+    );
+    if (taken.length) {
+      return res
+        .status(409)
+        .json({ error: 'This email is already registered to another account.' });
+    }
+
+    const [self] = await pool.query(
+      'SELECT email, email_verified_at FROM users WHERE id = ?',
+      [req.userId]
+    );
+    if (
+      self[0].email &&
+      self[0].email === email &&
+      self[0].email_verified_at
+    ) {
+      return res.status(400).json({
+        error: 'You are already registered with this email.',
+      });
+    }
+
+    const code = otpUtil.randomDigits4();
+    const codeHash = otpUtil.hashCode(code);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query(
+      'DELETE FROM email_otps WHERE email = ? AND user_id = ? AND purpose = ?',
+      [email, req.userId, 'registration']
+    );
+
+    await pool.query(
+      `INSERT INTO email_otps (email, user_id, purpose, code_hash, expires_at)
+       VALUES (?, ?, 'registration', ?, ?)`,
+      [email, req.userId, codeHash, expiresAt]
+    );
+
+    registerOtpLastSent.set(email, Date.now());
+
+    await mail.sendMail({
+      to: email,
+      subject: 'Your Anki Free verification code',
+      text: `Your verification code is: ${code}\n\nIt expires in 10 minutes.`,
+    });
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('register otp request:', error);
+    res.status(500).json({ error: 'Could not send verification email' });
+  }
+});
+
+app.post('/auth/register/otp/verify', requireSessionUser, async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const code = String(req.body?.code || '').trim();
+    if (!email || !/^\d{4}$/.test(code)) {
+      return res.status(400).json({ error: 'Enter the 4-digit code' });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT id FROM email_otps WHERE email = ? AND user_id = ? AND purpose = 'registration'
+       AND consumed_at IS NULL AND expires_at > NOW() AND code_hash = ?`,
+      [email, req.userId, otpUtil.hashCode(code)]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({ error: 'Invalid or expired code' });
+    }
+
+    await pool.query('UPDATE email_otps SET consumed_at = NOW() WHERE id = ?', [
+      rows[0].id,
+    ]);
+
+    try {
+      await pool.query(
+        'UPDATE users SET email = ?, email_verified_at = NOW() WHERE id = ?',
+        [email, req.userId]
+      );
+    } catch (e) {
+      if (e.code === 'ER_DUP_ENTRY') {
+        return res
+          .status(409)
+          .json({ error: 'This email is already in use.' });
+      }
+      throw e;
+    }
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('register otp verify:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+app.post('/auth/register/complete', requireSessionUser, async (req, res) => {
+  try {
+    const username = String(req.body?.username || '').trim();
+    const password = req.body?.password;
+
+    if (!username || username.length < 1 || username.length > 64) {
+      return res.status(400).json({ error: 'Invalid username' });
+    }
+
+    const [urows] = await pool.query(
+      'SELECT email_verified_at FROM users WHERE id = ?',
+      [req.userId]
+    );
+    if (!urows[0]?.email_verified_at) {
+      return res.status(400).json({ error: 'Verify your email first' });
+    }
+
+    const [dup] = await pool.query(
+      'SELECT id FROM users WHERE username = ? AND id != ?',
+      [username, req.userId]
+    );
+    if (dup.length) {
+      return res.status(409).json({ error: 'Username already taken' });
+    }
+
+    let passwordHash = null;
+    if (password != null && String(password).length > 0) {
+      if (String(password).length < 8) {
+        return res
+          .status(400)
+          .json({ error: 'Password must be at least 8 characters' });
+      }
+      passwordHash = await bcrypt.hash(String(password), 10);
+    }
+
+    await pool.query(
+      'UPDATE users SET username = ?, password_hash = ? WHERE id = ?',
+      [username, passwordHash, req.userId]
+    );
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('register complete:', error);
+    res.status(500).json({ error: 'Could not complete registration' });
+  }
+});
+
 // Create a new deck
-app.post('/decks', async (req, res) => {
+app.post('/decks', requireSessionUser, async (req, res) => {
   try {
     const { name, headers, data } = req.body;
     const [result] = await pool.query(
@@ -214,7 +652,7 @@ app.post('/decks', async (req, res) => {
 });
 
 // Get all decks for user
-app.get('/decks', async (req, res) => {
+app.get('/decks', requireSessionUser, async (req, res) => {
   try {
     const [rows] = await pool.query(
       'SELECT id, name FROM decks WHERE user_id = ?',
@@ -228,12 +666,12 @@ app.get('/decks', async (req, res) => {
 });
 
 // Get a specific deck
-app.get('/decks/:id', async (req, res) => {
+app.get('/decks/:id', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await pool.query(
-      'SELECT name, headers, data FROM decks WHERE id = ?',
-      [id]
+      'SELECT name, headers, data FROM decks WHERE id = ? AND user_id = ?',
+      [id, req.userId]
     );
 
     if (rows.length === 0) {
@@ -280,14 +718,14 @@ app.get('/decks/:id', async (req, res) => {
 });
 
 // Update a deck
-app.put('/decks/:id', async (req, res) => {
+app.put('/decks/:id', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, headers, data } = req.body;
 
     const [rows] = await pool.query(
-      'UPDATE decks SET name = ?, headers = ?, data = ? WHERE id = ?',
-      [name, JSON.stringify(headers), JSON.stringify(data), id]
+      'UPDATE decks SET name = ?, headers = ?, data = ? WHERE id = ? AND user_id = ?',
+      [name, JSON.stringify(headers), JSON.stringify(data), id, req.userId]
     );
 
     if (rows.affectedRows === 0) {
@@ -302,10 +740,13 @@ app.put('/decks/:id', async (req, res) => {
 });
 
 // Delete a deck
-app.delete('/decks/:id', async (req, res) => {
+app.delete('/decks/:id', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const [rows] = await pool.query('DELETE FROM decks WHERE id = ?', [id]);
+    const [rows] = await pool.query(
+      'DELETE FROM decks WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
 
     if (rows.affectedRows === 0) {
       return res.status(404).send('Deck not found');
@@ -319,9 +760,12 @@ app.delete('/decks/:id', async (req, res) => {
 });
 
 // Get deck difficulties
-app.get('/decks/:id/difficulties', async (req, res) => {
+app.get('/decks/:id/difficulties', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!(await deckOwnedByUser(id, req.userId))) {
+      return res.status(404).send('Deck not found');
+    }
     const [rows] = await pool.query(
       'SELECT row_index, difficulty FROM deck_difficulties WHERE deck_id = ? AND user_id = ?',
       [id, req.userId]
@@ -340,9 +784,12 @@ app.get('/decks/:id/difficulties', async (req, res) => {
 });
 
 // Save difficulty
-app.post('/decks/:id/difficulties', async (req, res) => {
+app.post('/decks/:id/difficulties', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!(await deckOwnedByUser(id, req.userId))) {
+      return res.status(404).send('Deck not found');
+    }
     const { rowIndex, difficulty } = req.body;
     await pool.query(
       'INSERT INTO deck_difficulties (deck_id, user_id, row_index, difficulty) VALUES (?, ?, ?, ?) ' +
@@ -357,9 +804,12 @@ app.post('/decks/:id/difficulties', async (req, res) => {
 });
 
 // Get deck settings
-app.get('/decks/:id/settings', async (req, res) => {
+app.get('/decks/:id/settings', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!(await deckOwnedByUser(id, req.userId))) {
+      return res.status(404).send('Deck not found');
+    }
     const [rows] = await pool.query(
       'SELECT direction, skip_easy FROM deck_settings WHERE deck_id = ? AND user_id = ?',
       [id, req.userId]
@@ -382,9 +832,12 @@ app.get('/decks/:id/settings', async (req, res) => {
 });
 
 // Update deck settings
-app.put('/decks/:id/settings', async (req, res) => {
+app.put('/decks/:id/settings', requireSessionUser, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!(await deckOwnedByUser(id, req.userId))) {
+      return res.status(404).send('Deck not found');
+    }
     const { direction, skip_easy } = req.body;
 
     const [result] = await pool.query(
@@ -401,7 +854,7 @@ app.put('/decks/:id/settings', async (req, res) => {
 });
 
 // Add these new endpoints
-app.get('/default-decks', async (req, res) => {
+app.get('/default-decks', requireSessionUser, async (req, res) => {
   try {
     const examplesDir = config.paths.examples;
 
@@ -422,7 +875,7 @@ app.get('/default-decks', async (req, res) => {
   }
 });
 
-app.post('/import-default-decks', async (req, res) => {
+app.post('/import-default-decks', requireSessionUser, async (req, res) => {
   try {
     const examplesDir = config.paths.examples;
 
@@ -476,51 +929,62 @@ app.post('/import-default-decks', async (req, res) => {
   }
 });
 
-// User identification endpoint
+// User identification: session cookie, or recover via storedUsername, or new anonymous user
 app.post('/user/identify', async (req, res) => {
   const ipAddress = req.ip;
+  const { storedUsername } = req.body || {};
 
   try {
-    console.log('User identification request from IP:', ipAddress);
+    const sessionId = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const sessionUserId = await sessionService.findUserIdForSession(
+      pool,
+      sessionId
+    );
 
-    // First try to find user by stored username
-    const { storedUsername } = req.body;
-    if (storedUsername) {
-      const [existingUser] = await pool.query(
-        'SELECT username, theme FROM users WHERE username = ?',
-        [storedUsername]
+    if (sessionUserId) {
+      const [users] = await pool.query(
+        'SELECT username, theme, email, email_verified_at FROM users WHERE id = ?',
+        [sessionUserId]
       );
-      if (existingUser.length > 0) {
+      if (users.length > 0) {
+        await sessionService.touchSession(pool, sessionId);
         return res.json({
-          username: existingUser[0].username,
-          theme: existingUser[0].theme,
+          username: users[0].username,
+          theme: users[0].theme || 'light',
           isNew: false,
+          isAnonymous:
+            !users[0].email || !users[0].email_verified_at,
         });
       }
     }
 
-    // Then try to find by IP if no stored username or username not found
-    const [existingUserByIp] = await pool.query(
-      'SELECT username, theme FROM users WHERE ip_address = ?',
-      [ipAddress]
-    );
-
-    if (existingUserByIp.length > 0) {
-      return res.json({
-        username: existingUserByIp[0].username,
-        theme: existingUserByIp[0].theme,
-        isNew: false,
-      });
+    if (storedUsername) {
+      const [existingUser] = await pool.query(
+        'SELECT id, username, theme, email, email_verified_at FROM users WHERE username = ?',
+        [storedUsername]
+      );
+      if (existingUser.length > 0) {
+        const { sessionId: newSid } = await sessionService.createSession(
+          pool,
+          existingUser[0].id
+        );
+        sessionService.setSessionCookie(res, newSid);
+        return res.json({
+          username: existingUser[0].username,
+          theme: existingUser[0].theme || 'light',
+          isNew: false,
+          isAnonymous:
+            !existingUser[0].email || !existingUser[0].email_verified_at,
+        });
+      }
     }
 
-    // If no user found, create new one
     const { generateUsername } = require('./services/usernameGenerator');
     let username;
     let user = null;
     let attempts = 0;
     const maxAttempts = 3;
 
-    // First try up to 3 random combinations
     while (!user && attempts < maxAttempts) {
       try {
         username = await generateUsername();
@@ -537,7 +1001,6 @@ app.post('/user/identify', async (req, res) => {
       attempts++;
     }
 
-    // If still no unique username, add numbers until we find one
     if (!user) {
       let counter = 1;
       while (!user) {
@@ -557,7 +1020,18 @@ app.post('/user/identify', async (req, res) => {
       }
     }
 
-    return res.json({ username: user.username, theme: 'light', isNew: true });
+    const { sessionId: newSid } = await sessionService.createSession(
+      pool,
+      user.id
+    );
+    sessionService.setSessionCookie(res, newSid);
+
+    return res.json({
+      username: user.username,
+      theme: 'light',
+      isNew: true,
+      isAnonymous: true,
+    });
   } catch (error) {
     console.error('Error in user identification:', error);
     res.status(500).json({ error: 'Internal server error' });
