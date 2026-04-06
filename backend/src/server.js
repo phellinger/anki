@@ -14,11 +14,42 @@ const otpUtil = require('./services/otp');
 const app = express();
 const PORT = config.server.port;
 
+const corsExtraOrigins = (process.env.CORS_EXTRA_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const corsAllowedOrigins = new Set(
+  [
+    config.server.frontendUrl,
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost',
+    'http://127.0.0.1',
+    ...corsExtraOrigins,
+  ].filter(Boolean)
+);
+
+function corsOrigin(origin, callback) {
+  if (!origin) {
+    return callback(null, true);
+  }
+  if (corsAllowedOrigins.has(origin)) {
+    return callback(null, true);
+  }
+  if (origin.startsWith('capacitor://') || origin.startsWith('ionic://')) {
+    return callback(null, true);
+  }
+  console.warn(`CORS blocked Origin: ${origin}`);
+  callback(new Error('Not allowed by CORS'));
+}
+
 // Middleware
 app.use(
   cors({
-    origin: config.server.frontendUrl,
+    origin: corsOrigin,
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(bodyParser.json());
@@ -29,7 +60,7 @@ const userCreationLocks = new Map();
 
 async function requireSessionUser(req, res, next) {
   try {
-    const sessionId = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const sessionId = sessionService.getSessionIdFromRequest(req);
     const userId = await sessionService.findUserIdForSession(pool, sessionId);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -318,7 +349,7 @@ app.put('/user/theme', requireSessionUser, async (req, res) => {
 // End session (clears cookie; client should reload so /user/identify creates a new anonymous user)
 app.post('/auth/logout', async (req, res) => {
   try {
-    const sessionId = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const sessionId = sessionService.getSessionIdFromRequest(req);
     if (sessionId) {
       await sessionService.destroySession(pool, sessionId);
     }
@@ -370,7 +401,7 @@ app.post('/auth/login/otp/request', async (req, res) => {
 
     await mail.sendMail({
       to: user.email,
-      subject: 'Your Anki Free sign-in code',
+      subject: 'Your Anki Today sign-in code',
       text: `Your sign-in code is: ${code}\n\nIt expires in 10 minutes. If you did not request this, ignore this email.`,
     });
 
@@ -408,7 +439,7 @@ app.post('/auth/login/otp/verify', async (req, res) => {
       rows[0].id,
     ]);
 
-    const oldSid = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const oldSid = sessionService.getSessionIdFromRequest(req);
     if (oldSid) {
       await sessionService.destroySession(pool, oldSid);
     }
@@ -423,6 +454,7 @@ app.post('/auth/login/otp/verify', async (req, res) => {
       username: user.username,
       theme: user.theme || 'light',
       isAnonymous: false,
+      token: newSid,
     });
   } catch (error) {
     console.error('login otp verify:', error);
@@ -451,7 +483,7 @@ app.post('/auth/login/password', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email/username or password' });
     }
 
-    const oldSid = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const oldSid = sessionService.getSessionIdFromRequest(req);
     if (oldSid) {
       await sessionService.destroySession(pool, oldSid);
     }
@@ -466,6 +498,7 @@ app.post('/auth/login/password', async (req, res) => {
       username: user.username,
       theme: user.theme || 'light',
       isAnonymous: false,
+      token: newSid,
     });
   } catch (error) {
     console.error('login password:', error);
@@ -532,7 +565,7 @@ app.post('/auth/register/otp/request', requireSessionUser, async (req, res) => {
 
     await mail.sendMail({
       to: email,
-      subject: 'Your Anki Free verification code',
+      subject: 'Your Anki Today verification code',
       text: `Your verification code is: ${code}\n\nIt expires in 10 minutes.`,
     });
 
@@ -935,7 +968,7 @@ app.post('/user/identify', async (req, res) => {
   const { storedUsername } = req.body || {};
 
   try {
-    const sessionId = req.cookies?.[sessionService.SESSION_COOKIE_NAME];
+    const sessionId = sessionService.getSessionIdFromRequest(req);
     const sessionUserId = await sessionService.findUserIdForSession(
       pool,
       sessionId
@@ -954,6 +987,7 @@ app.post('/user/identify', async (req, res) => {
           isNew: false,
           isAnonymous:
             !users[0].email || !users[0].email_verified_at,
+          token: sessionId,
         });
       }
     }
@@ -975,6 +1009,7 @@ app.post('/user/identify', async (req, res) => {
           isNew: false,
           isAnonymous:
             !existingUser[0].email || !existingUser[0].email_verified_at,
+          token: newSid,
         });
       }
     }
@@ -1031,6 +1066,7 @@ app.post('/user/identify', async (req, res) => {
       theme: 'light',
       isNew: true,
       isAnonymous: true,
+      token: newSid,
     });
   } catch (error) {
     console.error('Error in user identification:', error);

@@ -102,16 +102,19 @@ Anonymous → registered: **same `user_id`** throughout; decks stay attached. Re
 | **HTTP-only session cookie** | Opaque session id after bootstrap / sign-in / register complete |
 | **axios** | `withCredentials: true`; CORS with **credentials** + explicit **origin** |
 
-### 5.2 Mobile (future)
+### 5.2 Mobile / Capacitor *(implemented — Phase D)*
 
-Native apps should use the **same** JSON endpoints; **do not rely on browser cookies** as the only mechanism.
+Native shells **do not** use browser cookies. The backend accepts the **same** opaque session id as either **`sid`** (web) or **`Authorization: Bearer <session id>`** (native).
 
-| Approach | Notes |
-| -------- | ----- |
-| **Access + refresh JWT** (or opaque tokens) | Issued on successful bootstrap / OTP verify / password login; **refresh** rotates access; stored in **expo-secure-store** |
-| **Same OTP/password payloads** | Request body identical to web; only `Authorization` header differs |
+| Mechanism | Role |
+| --------- | ---- |
+| **Bearer header** | Same value as the server’s session row id; sent on every request when cookies are not used |
+| **`token` in JSON** | Responses that establish or continue a session include **`token`** so the client can persist it (e.g. `@capacitor/preferences`) |
+| **CORS** | `Authorization` allowed in preflight (`Access-Control-Allow-Headers`) |
 
-Document token lifetimes and refresh in OpenAPI or this doc when implemented.
+**Capacitor client:** `frontend/src/services/apiAuth.js` — on native, sets **`REACT_APP_API_URL`** as axios `baseURL`, **`withCredentials: false`**, loads/saves the token and sets **`Authorization`**. Web builds unchanged (cookie + proxy).
+
+Optional later: **refresh rotation** or JWT; current design is a **single long-lived opaque id** (same as cookie value).
 
 ---
 
@@ -207,11 +210,13 @@ Document token lifetimes and refresh in OpenAPI or this doc when implemented.
 - `POST /auth/login/otp/verify` — `{ identifier, code }` — new session cookie
 - `POST /auth/login/password` — `{ identifier, password }` if user set a password at registration
 - UI: `/sign-in` (header: **Log out · Sign in · Register**)
-- **Token response** for mobile remains Phase D
+- **Token in JSON** for clients that cannot rely on cookies (native)
 
-**Phase D — Mobile**
+**Phase D — Mobile / Bearer** *(implemented)*
 
-- Same APIs; add **Bearer** issuance for native clients; Expo secure storage
+- **`getSessionIdFromRequest`** — session from cookie **`sid`** or **`Authorization: Bearer <opaque id>`**
+- **Login / identify** responses include **`token`** where a session is created or continued; logout clears session from cookie **or** Bearer
+- **Frontend:** Capacitor-only `initApiAuth` + `setSessionToken` / `clearSessionToken` (`frontend/src/services/apiAuth.js`, `UserContext`, `SignIn`)
 
 ---
 

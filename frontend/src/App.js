@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
 import DeckManager from './components/DeckManager';
 import DeckForm from './components/DeckForm';
 import EditDeck from './components/EditDeck';
@@ -12,12 +12,18 @@ import { CssBaseline } from '@mui/material';
 import Register from './components/Register';
 import SignIn from './components/SignIn';
 
+// History-mode routing often fails in Capacitor WKWebView; native builds set REACT_APP_USE_HASH_ROUTER at build time.
+const useHashRouter = ['1', 'true'].includes(
+  String(process.env.REACT_APP_USE_HASH_ROUTER || '').toLowerCase()
+);
+const AppRouter = useHashRouter ? HashRouter : BrowserRouter;
+
 function App() {
   return (
     <UserProvider>
       <ThemeProvider>
         <CssBaseline />
-        <Router>
+        <AppRouter>
           <Container
             maxWidth={false}
             sx={{
@@ -25,7 +31,7 @@ function App() {
               px: { xs: 1, sm: 2, md: 3 },
               width: '100%',
               maxWidth: '1200px',
-              minWidth: '400px',
+              minWidth: { xs: 0, sm: '400px' },
               mx: 'auto',
               overflow: 'auto',
             }}
@@ -40,7 +46,7 @@ function App() {
               <Route path='/sign-in' element={<SignIn />} />
             </Routes>
           </Container>
-        </Router>
+        </AppRouter>
       </ThemeProvider>
     </UserProvider>
   );

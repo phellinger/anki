@@ -1,0 +1,8 @@
+{
+  "appId": "com.ankitoday.app",
+  "appName": "Anki Today",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  }
+}

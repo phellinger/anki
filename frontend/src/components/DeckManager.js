@@ -210,7 +210,7 @@ function DeckManager() {
   };
 
   return (
-    <PageContainer>
+    <PageContainer data-testid='deck-manager'>
       <UserInfo />
       <Typography variant='h4' component='h1' sx={commonStyles.welcomeTitle}>
         {user?.isNew ? (
@@ -235,7 +235,7 @@ function DeckManager() {
             component='h1'
             sx={commonStyles.sectionTitle}
           >
-            Your&nbsp;Decks
+            Your Decks
           </Typography>
           <Box sx={commonStyles.buttonGroup}>
             <Button

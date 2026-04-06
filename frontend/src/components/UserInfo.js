@@ -5,12 +5,23 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useUser } from '../contexts/UserContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { commonStyles } from '../styles/muiStyles';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
+import { isHashRouterBuild } from '../goToPath';
+
+const headerLinkSx = {
+  verticalAlign: 'baseline',
+  cursor: 'pointer',
+  font: 'inherit',
+  color: 'inherit',
+  textDecoration: 'underline',
+  border: 0,
+  background: 'none',
+  padding: 0,
+};
 
 function UserInfo() {
   const { user, logout } = useUser();
   const { mode, toggleTheme } = useTheme();
-  const navigate = useNavigate();
 
   return (
     <Box sx={commonStyles.userInfo}>
@@ -18,34 +29,57 @@ function UserInfo() {
         Logged in as {user?.username}
         {' · '}
         <Link
-          href='#'
-          onClick={(e) => {
-            e.preventDefault();
-            logout();
-          }}
+          component='button'
+          type='button'
+          onClick={() => logout()}
+          sx={headerLinkSx}
         >
           Log out
         </Link>
         {' · '}
-        <Link
-          href='#'
-          onClick={(e) => {
-            e.preventDefault();
-            navigate('/sign-in');
-          }}
-        >
-          Sign in
-        </Link>
+        {isHashRouterBuild() ? (
+          <Link
+            href='#/sign-in'
+            aria-label='Header sign-in'
+            color='inherit'
+            underline='always'
+            sx={headerLinkSx}
+          >
+            Sign in
+          </Link>
+        ) : (
+          <Link
+            component={RouterLink}
+            to='/sign-in'
+            aria-label='Header sign-in'
+            color='inherit'
+            underline='always'
+            sx={headerLinkSx}
+          >
+            Sign in
+          </Link>
+        )}
         {' · '}
-        <Link
-          href='#'
-          onClick={(e) => {
-            e.preventDefault();
-            navigate('/register');
-          }}
-        >
-          Register
-        </Link>
+        {isHashRouterBuild() ? (
+          <Link
+            href='#/register'
+            color='inherit'
+            underline='always'
+            sx={headerLinkSx}
+          >
+            Register
+          </Link>
+        ) : (
+          <Link
+            component={RouterLink}
+            to='/register'
+            color='inherit'
+            underline='always'
+            sx={headerLinkSx}
+          >
+            Register
+          </Link>
+        )}
       </Typography>
       <IconButton onClick={toggleTheme} color='inherit'>
         {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}

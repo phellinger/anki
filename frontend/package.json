@@ -1,9 +1,14 @@
 {
-  "name": "react-deck-manager",
+  "name": "anki-today",
   "version": "0.1.0",
   "private": true,
   "proxy": "http://127.0.0.1:5193",
   "dependencies": {
+    "@capacitor/android": "^5.7.8",
+    "@capacitor/cli": "^5.7.8",
+    "@capacitor/core": "^5.7.8",
+    "@capacitor/ios": "^5.7.8",
+    "@capacitor/preferences": "^5.0.8",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.0",
@@ -22,7 +27,10 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "serve": "serve -s build -l 3123"
+    "serve": "serve -s build -l 3123",
+    "cap:sync": "REACT_APP_USE_HASH_ROUTER=1 npm run build && npx cap sync",
+    "cap:ios": "npx cap open ios",
+    "cap:android": "npx cap open android"
   },
   "eslintConfig": {
     "extends": [

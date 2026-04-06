@@ -59,6 +59,17 @@ function clearSessionCookie(res) {
   });
 }
 
+/** Cookie `sid` or `Authorization: Bearer <same opaque id>` (native / Capacitor). */
+function getSessionIdFromRequest(req) {
+  const fromCookie = req.cookies?.[SESSION_COOKIE_NAME];
+  if (fromCookie) return fromCookie;
+  const auth = req.headers?.authorization;
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    return auth.slice(7).trim();
+  }
+  return null;
+}
+
 module.exports = {
   SESSION_COOKIE_NAME,
   createSession,
@@ -67,4 +78,5 @@ module.exports = {
   destroySession,
   setSessionCookie,
   clearSessionCookie,
+  getSessionIdFromRequest,
 };

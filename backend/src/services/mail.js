@@ -20,7 +20,7 @@ function createTransport() {
  * Sends email when SMTP_* is set; otherwise logs body (dev / no SMTP).
  */
 async function sendMail({ to, subject, text }) {
-  const from = process.env.MAIL_FROM || 'Anki Free <noreply@localhost>';
+  const from = process.env.MAIL_FROM || 'Anki Today <noreply@localhost>';
   const transport = createTransport();
 
   if (!transport) {

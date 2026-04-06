@@ -19,6 +19,17 @@ This document outlines how to extend this project—a **Create React App** front
 - **Phase 1:** **Capacitor** + local-first data + sync — fastest path, maximum reuse of the existing React app.
 - **Phase 2 (optional):** If you need store-grade UX (gestures, background refresh, widgets), add **Expo** and move **shared logic** into a `packages/shared` (or similar) library; reuse only that package from native.
 
+**Phase 1 status in this repo**
+
+| Piece | Status |
+| ----- | ------ |
+| Capacitor 5 in `frontend/` (`ios/`, `android/`, `capacitor.config.json`) | **Done** — `npm run cap:sync` (see repo `Makefile` **`cap-sync`**) |
+| API URL for device builds (`REACT_APP_API_URL`, no CRA proxy on device) | **Done** — see `.env.prod.template` |
+| Auth for native (Bearer + Preferences) | **Done** — pairs with **`docs/web-auth-plan.md` Phase D** |
+| IndexedDB + outbox + offline study | **Not yet** — still required before the app is truly offline-first (§5 step 4, §7 step 3) |
+
+**Tooling:** Capacitor 5 matches **Node 16**; newer Capacitor major versions often require **Node 18+**. On macOS, **iOS** needs **Xcode** + **CocoaPods** (`pod install` under `ios/App` if the Capacitor update step fails).
+
 ---
 
 ## 2. Offline-first data model (what must work without network)
@@ -81,11 +92,11 @@ Current mutations are largely **per-key upserts** (difficulties by `row_index`, 
 
 ## 5. Capacitor-specific plan (if you prioritize max reuse first)
 
-1. Add Capacitor to the CRA app; configure **iOS/Android**; point **API URL** at production (env).
-2. Ensure **HTTPS** API; configure **CORS** / **App Transport** as needed.
-3. Persist auth token / username with **Capacitor Preferences** or encrypted storage.
-4. Ship **IndexedDB + outbox** before calling the app “offline capable.”
-5. Test: airplane mode, kill app mid-queue, duplicate requests (idempotency).
+1. Add Capacitor to the CRA app; configure **iOS/Android**; point **API URL** at production (env). — **Done** (see Phase 1 table above).
+2. Ensure **HTTPS** API; configure **CORS** / **App Transport** as needed. — **CORS** includes `Authorization`; use HTTPS in production.
+3. Persist auth token / username with **Capacitor Preferences** or encrypted storage. — **Done** for session **token** (Bearer); username still from API as today.
+4. Ship **IndexedDB + outbox** before calling the app “offline capable.” — **Pending**
+5. Test: airplane mode, kill app mid-queue, duplicate requests (idempotency). — **After** (4)
 
 ---
 
@@ -104,7 +115,7 @@ If you commit to **Option 3** (Expo + react-native-web monorepo), use **§8.11**
 1. **Clarify user model** — Same user across devices and deck ownership (likely requires backend + client auth).
 2. **Extract shared domain + types** (optional npm workspace).
 3. **Local store + outbox** in the web app; make the **study path** work fully offline in the browser.
-4. **Add Capacitor** and verify parity on devices.
+4. **Add Capacitor** and verify parity on devices. — **Scaffold done**; parity testing once (3) lands.
 5. **Harden sync** (batch endpoint, ETags, idempotency) as usage grows.
 6. **Optional:** Expo app consuming the same shared package if WebView UX is not enough.
 

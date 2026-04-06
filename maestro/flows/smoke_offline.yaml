@@ -1,0 +1,8 @@
+# Expects /user/identify to fail (no API or unreachable REACT_APP_API_URL).
+appId: com.ankitoday.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Error loading user data"
+    timeout: 90000

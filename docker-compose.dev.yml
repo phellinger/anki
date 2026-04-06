@@ -3,7 +3,7 @@ version: '3.8'
 services:
   mysql:
     image: mysql:5.7
-    container_name: mysql
+    container_name: anki_mysql
     platform: linux/x86_64
     ports:
       - "3351:3306"
@@ -32,7 +32,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: development
-    container_name: backend
+    container_name: anki_backend
     ports:
       - "5193:5193"
     volumes:

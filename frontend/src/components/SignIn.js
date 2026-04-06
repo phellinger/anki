@@ -10,8 +10,10 @@ import {
   Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { goToPath, isHashRouterBuild } from '../goToPath';
 import PageContainer from './common/PageContainer';
 import axios from '../services/api';
+import { setSessionToken } from '../services/apiAuth';
 import { useUser } from '../contexts/UserContext';
 import { commonStyles } from '../styles/muiStyles';
 
@@ -34,7 +36,7 @@ function SignIn() {
 
   const applySessionAndGoHome = async () => {
     await refreshUser();
-    navigate('/');
+    goToPath(navigate, '/');
   };
 
   const handlePasswordSignIn = async (e) => {
@@ -50,10 +52,13 @@ function SignIn() {
     }
     setLoading(true);
     try {
-      await axios.post('/auth/login/password', {
+      const { data } = await axios.post('/auth/login/password', {
         identifier: identifier.trim(),
         password,
       });
+      if (data.token) {
+        await setSessionToken(data.token);
+      }
       await applySessionAndGoHome();
     } catch (err) {
       setSubmitError(
@@ -96,10 +101,13 @@ function SignIn() {
     }
     setLoading(true);
     try {
-      await axios.post('/auth/login/otp/verify', {
+      const { data } = await axios.post('/auth/login/otp/verify', {
         identifier: identifier.trim(),
         code: code.trim(),
       });
+      if (data.token) {
+        await setSessionToken(data.token);
+      }
       await applySessionAndGoHome();
     } catch (err) {
       setSubmitError(err.response?.data?.error || 'Invalid code');
@@ -112,6 +120,7 @@ function SignIn() {
     <PageContainer>
       <Paper
         component='form'
+        aria-label='Sign-in form'
         onSubmit={
           usePassword
             ? handlePasswordSignIn
@@ -126,7 +135,12 @@ function SignIn() {
           padding: 3,
         }}
       >
-        <Typography variant='h5' component='h1' sx={{ mb: 1 }}>
+        <Typography
+          variant='h5'
+          component='h1'
+          sx={{ mb: 1 }}
+          data-testid='sign-in-heading'
+        >
           Sign in
         </Typography>
         <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
@@ -158,6 +172,9 @@ function SignIn() {
               helperText={errors.identifier}
               sx={{ mb: 2 }}
               autoComplete='username'
+              inputProps={{
+                'aria-label': 'Email or username',
+              }}
             />
             <FormControlLabel
               control={
@@ -215,17 +232,35 @@ function SignIn() {
         )}
 
         <Box sx={commonStyles.buttonGroup}>
-          <Button
-            variant='outlined'
-            onClick={() =>
-              step === STEP_CODE
-                ? setStep(STEP_ENTER)
-                : navigate('/')
-            }
-            disabled={loading}
-          >
-            {step === STEP_CODE ? 'Back' : 'Cancel'}
-          </Button>
+          {step === STEP_CODE ? (
+            <Button
+              variant='outlined'
+              aria-label='Back'
+              onClick={() => setStep(STEP_ENTER)}
+              disabled={loading}
+            >
+              Back
+            </Button>
+          ) : isHashRouterBuild() ? (
+            <Button
+              variant='outlined'
+              component='a'
+              href='#/'
+              aria-label='Cancel'
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+          ) : (
+            <Button
+              variant='outlined'
+              aria-label='Cancel'
+              onClick={() => navigate('/')}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+          )}
           <Button variant='contained' type='submit' disabled={loading}>
             {usePassword && step === STEP_ENTER && 'Sign in'}
             {!usePassword && step === STEP_ENTER && 'Send code'}
@@ -235,9 +270,15 @@ function SignIn() {
 
         <Typography variant='body2' sx={{ mt: 2 }}>
           No account?{' '}
-          <Button size='small' onClick={() => navigate('/register')}>
-            Register
-          </Button>
+          {isHashRouterBuild() ? (
+            <Button component='a' href='#/register' size='small'>
+              Register
+            </Button>
+          ) : (
+            <Button size='small' onClick={() => navigate('/register')}>
+              Register
+            </Button>
+          )}
         </Typography>
       </Paper>
     </PageContainer>

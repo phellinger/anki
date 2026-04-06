@@ -36,7 +36,7 @@ backend-npm-install:
 
 .PHONY: dev-backend-logs
 dev-backend-logs:
-	docker logs -f backend
+	docker logs -f anki_backend
 
 .PHONY: dev-backend-stop
 dev-backend-stop:
@@ -57,6 +57,49 @@ frontend-install:
 .PHONY: frontend-start
 frontend-start:
 	cd frontend && npm start
+
+# Capacitor: build web app and copy into ios/android (requires Node 16+; Capacitor 6+ needs Node 18+)
+.PHONY: cap-sync
+cap-sync:
+	cd frontend && npm run cap:sync
+
+# Maestro: build + simctl install com.ankitoday.app (required before launchApp/clearState), then run flows.
+# Example: MAESTRO_DRIVER_STARTUP_TIMEOUT=180000 make maestro-test
+.PHONY: maestro-ios-install
+maestro-ios-install:
+	@device=$$(bash scripts/maestro-ensure-ios-sim.sh) || exit 1; \
+	echo "Simulator: $$device"; \
+	bash scripts/maestro-install-ios-app.sh "$$device" || exit 1
+
+.PHONY: maestro-test
+maestro-test:
+	@device=$$(bash scripts/maestro-ensure-ios-sim.sh) || exit 1; \
+	echo "Simulator: $$device"; \
+	bash scripts/maestro-install-ios-app.sh "$$device" || exit 1; \
+	maestro test maestro/flows/smoke_home.yaml --device "$$device"
+
+.PHONY: maestro-test-offline
+maestro-test-offline:
+	@device=$$(bash scripts/maestro-ensure-ios-sim.sh) || exit 1; \
+	echo "Simulator: $$device"; \
+	bash scripts/maestro-install-ios-app.sh "$$device" || exit 1; \
+	maestro test maestro/flows/smoke_offline.yaml --device "$$device"
+
+# All flows that expect a reachable API (excludes smoke_offline.yaml, which needs identify to fail).
+.PHONY: maestro-test-all
+maestro-test-all:
+	@device=$$(bash scripts/maestro-ensure-ios-sim.sh) || exit 1; \
+	echo "Simulator: $$device"; \
+	bash scripts/maestro-install-ios-app.sh "$$device" || exit 1; \
+	flows=$$(find maestro/flows -maxdepth 1 -name '*.yaml' ! -name 'smoke_offline.yaml' | sort); \
+	test -n "$$flows" || { echo 'No online Maestro flows under maestro/flows' >&2; exit 1; }; \
+	maestro test $$flows --device "$$device"
+
+# Maestro only (skip rebuild/install). Requires app already installed on the booted simulator.
+.PHONY: maestro-test-only
+maestro-test-only:
+	@device=$$(bash scripts/maestro-ensure-ios-sim.sh) || exit 1; \
+	maestro test maestro/flows/smoke_home.yaml --device "$$device"
 
 # =============================================================================
 # Remote / full Docker dev

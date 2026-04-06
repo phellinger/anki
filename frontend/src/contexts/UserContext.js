@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import axios from '../services/api';
+import { setSessionToken, clearSessionToken } from '../services/apiAuth';
 
 const UserContext = createContext();
 const USER_STORAGE_KEY = 'user';
@@ -41,6 +42,10 @@ export function UserProvider({ children }) {
         const response = await axios.post('/user/identify', {
           storedUsername: storedData?.username,
         });
+
+        if (response.data.token) {
+          await setSessionToken(response.data.token);
+        }
 
         const userData = {
           username: response.data.username,
@@ -91,16 +96,25 @@ export function UserProvider({ children }) {
     } catch (e) {
       console.error('Logout request failed:', e);
     }
+    await clearSessionToken();
     localStorage.removeItem(USER_STORAGE_KEY);
     window.location.assign('/');
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div data-testid='identify-loading' role='status'>
+        Loading...
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error loading user data</div>;
+    return (
+      <div data-testid='identify-error' role='alert'>
+        Error loading user data
+      </div>
+    );
   }
 
   return (

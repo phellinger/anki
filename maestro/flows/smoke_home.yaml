@@ -1,0 +1,11 @@
+# Happy path: requires backend at REACT_APP_API_URL (e.g. http://127.0.0.1:5193) baked into the web bundle.
+# iOS: Maestro/XCUITest taps on elements inside the Capacitor WKWebView often complete without delivering a real
+# navigation to the page (hash links and React Router do not update). Sign-in is not covered here; use Android or manual QA for that path.
+appId: com.ankitoday.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Your Decks"
+    timeout: 90000
+- assertVisible: "Logged in as"
