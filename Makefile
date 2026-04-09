@@ -63,6 +63,15 @@ frontend-start:
 cap-sync:
 	cd frontend && npm run cap:sync
 
+# iOS Simulator: boot Simulator, build + install, then launch com.ankitoday.app (full cap sync + xcodebuild pipeline).
+# Default API in bundle: http://127.0.0.1:5193 — run make dev-backend first. Override: REACT_APP_API_URL=... make ios-sim-run
+# Prefer this over Xcode ⌘R when you see a black WebView (stale ios/App/App/public vs native build).
+.PHONY: ios-sim-run sim-run
+ios-sim-run:
+	@bash scripts/ios-sim-run.sh
+
+sim-run: ios-sim-run
+
 # Maestro: build + simctl install com.ankitoday.app (required before launchApp/clearState), then run flows.
 # Example: MAESTRO_DRIVER_STARTUP_TIMEOUT=180000 make maestro-test
 .PHONY: maestro-ios-install
